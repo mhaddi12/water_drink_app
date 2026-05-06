@@ -1,0 +1,511 @@
+{
+  "project_info": {
+    "project_number": "12117966625",
+    "firebase_url": "https://simple-app-f309d-default-rtdb.firebaseio.com",
+    "project_id": "simple-app-f309d",
+    "storage_bucket": "simple-app-f309d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12117966625:android:27c6fed91f6b14ad2e4860",
+        "android_client_info": {
+          "package_name": "com.example"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "12117966625-pc4qdi60i0o88cb3fi0m1p72jmg144qc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example",
+            "certificate_hash": "e311cce624f0395179fc7a00b3e9a7509359c8d9"
+          }
+        },
+        {
+          "client_id": "12117966625-rpqoc79ga56gdna471bf954vl3erkbgm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzKOqA3jUCr1M5AcCWqp7lpUkiTqivXSw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "12117966625-eabhc2e2v9pam3bm8a6t3rghrkqfa67h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "12117966625-0iaepu47pqdc0h969d9i94atmvrgrjad.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.habitTrackerApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12117966625:android:f18256daa7d13e362e4860",
+        "android_client_info": {
+          "package_name": "com.example.agora_call_app_minimal_intigration"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "12117966625-rpqoc79ga56gdna471bf954vl3erkbgm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzKOqA3jUCr1M5AcCWqp7lpUkiTqivXSw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "12117966625-eabhc2e2v9pam3bm8a6t3rghrkqfa67h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "12117966625-0iaepu47pqdc0h969d9i94atmvrgrjad.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.habitTrackerApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12117966625:android:460a8ab79882c2e32e4860",
+        "android_client_info": {
+          "package_name": "com.example.baccract"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "12117966625-rpqoc79ga56gdna471bf954vl3erkbgm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzKOqA3jUCr1M5AcCWqp7lpUkiTqivXSw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "12117966625-eabhc2e2v9pam3bm8a6t3rghrkqfa67h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "12117966625-0iaepu47pqdc0h969d9i94atmvrgrjad.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.habitTrackerApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12117966625:android:2860ea3abc5b681c2e4860",
+        "android_client_info": {
+          "package_name": "com.example.bacrract"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "12117966625-rpqoc79ga56gdna471bf954vl3erkbgm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzKOqA3jUCr1M5AcCWqp7lpUkiTqivXSw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "12117966625-eabhc2e2v9pam3bm8a6t3rghrkqfa67h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "12117966625-0iaepu47pqdc0h969d9i94atmvrgrjad.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.habitTrackerApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12117966625:android:63eee41a6584a8402e4860",
+        "android_client_info": {
+          "package_name": "com.example.flutter_ai_toolkit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "12117966625-rpqoc79ga56gdna471bf954vl3erkbgm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzKOqA3jUCr1M5AcCWqp7lpUkiTqivXSw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "12117966625-eabhc2e2v9pam3bm8a6t3rghrkqfa67h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "12117966625-0iaepu47pqdc0h969d9i94atmvrgrjad.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.habitTrackerApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12117966625:android:fe27d108e114d0c72e4860",
+        "android_client_info": {
+          "package_name": "com.example.fuelnow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "12117966625-rpqoc79ga56gdna471bf954vl3erkbgm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzKOqA3jUCr1M5AcCWqp7lpUkiTqivXSw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "12117966625-eabhc2e2v9pam3bm8a6t3rghrkqfa67h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "12117966625-0iaepu47pqdc0h969d9i94atmvrgrjad.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.habitTrackerApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12117966625:android:598bc88c52ad03842e4860",
+        "android_client_info": {
+          "package_name": "com.example.real_time_game"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "12117966625-2blcn9e1bseacq254kds0nv758i0vvt2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.real_time_game",
+            "certificate_hash": "e311cce624f0395179fc7a00b3e9a7509359c8d9"
+          }
+        },
+        {
+          "client_id": "12117966625-rpqoc79ga56gdna471bf954vl3erkbgm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzKOqA3jUCr1M5AcCWqp7lpUkiTqivXSw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "12117966625-eabhc2e2v9pam3bm8a6t3rghrkqfa67h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "12117966625-0iaepu47pqdc0h969d9i94atmvrgrjad.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.habitTrackerApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12117966625:android:0b98e8a56be266b52e4860",
+        "android_client_info": {
+          "package_name": "com.example.socail_media_bloc"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "12117966625-rpqoc79ga56gdna471bf954vl3erkbgm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzKOqA3jUCr1M5AcCWqp7lpUkiTqivXSw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "12117966625-eabhc2e2v9pam3bm8a6t3rghrkqfa67h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "12117966625-0iaepu47pqdc0h969d9i94atmvrgrjad.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.habitTrackerApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12117966625:android:00e63fab86f105f82e4860",
+        "android_client_info": {
+          "package_name": "com.example.social_media_bloc"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "12117966625-rpqoc79ga56gdna471bf954vl3erkbgm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzKOqA3jUCr1M5AcCWqp7lpUkiTqivXSw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "12117966625-eabhc2e2v9pam3bm8a6t3rghrkqfa67h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "12117966625-0iaepu47pqdc0h969d9i94atmvrgrjad.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.habitTrackerApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12117966625:android:37a66113ae327a9b2e4860",
+        "android_client_info": {
+          "package_name": "com.example.todo_simple"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "12117966625-rpqoc79ga56gdna471bf954vl3erkbgm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzKOqA3jUCr1M5AcCWqp7lpUkiTqivXSw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "12117966625-eabhc2e2v9pam3bm8a6t3rghrkqfa67h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "12117966625-0iaepu47pqdc0h969d9i94atmvrgrjad.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.habitTrackerApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12117966625:android:d9d51bf90ee12de42e4860",
+        "android_client_info": {
+          "package_name": "com.haddi.habit_tracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "12117966625-rpqoc79ga56gdna471bf954vl3erkbgm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzKOqA3jUCr1M5AcCWqp7lpUkiTqivXSw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "12117966625-eabhc2e2v9pam3bm8a6t3rghrkqfa67h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "12117966625-0iaepu47pqdc0h969d9i94atmvrgrjad.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.habitTrackerApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12117966625:android:b6f8a34a1b0752902e4860",
+        "android_client_info": {
+          "package_name": "com.haddi.memoflow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "12117966625-6b26akec5bn5k112ce8u8r77n7m5nnsa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.haddi.memoflow",
+            "certificate_hash": "3dc5f0e8a73c33e604db1218262402f999287759"
+          }
+        },
+        {
+          "client_id": "12117966625-b3glfk41a8aafa43eq1spcqgvvj7tide.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.haddi.memoflow",
+            "certificate_hash": "5588cf35f67fcde4b16b488942ebcfb9006423d7"
+          }
+        },
+        {
+          "client_id": "12117966625-rpqoc79ga56gdna471bf954vl3erkbgm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzKOqA3jUCr1M5AcCWqp7lpUkiTqivXSw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "12117966625-eabhc2e2v9pam3bm8a6t3rghrkqfa67h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "12117966625-0iaepu47pqdc0h969d9i94atmvrgrjad.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.habitTrackerApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12117966625:android:bb471ec4e5b489312e4860",
+        "android_client_info": {
+          "package_name": "com.hydra.water_tracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "12117966625-rpqoc79ga56gdna471bf954vl3erkbgm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzKOqA3jUCr1M5AcCWqp7lpUkiTqivXSw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "12117966625-eabhc2e2v9pam3bm8a6t3rghrkqfa67h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "12117966625-0iaepu47pqdc0h969d9i94atmvrgrjad.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.habitTrackerApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
