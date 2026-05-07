@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:water_drink_app/features/focus/controllers/focus_nav_controller.dart';
 import 'package:water_drink_app/features/focus/controllers/home_controller.dart';
+import 'package:water_drink_app/features/focus/controllers/systems_controller.dart';
+import 'package:water_drink_app/features/focus/presentation/screens/create_system_screen.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_app_bar.dart';
 
 class FocusHomeScreen extends StatelessWidget {
@@ -8,7 +11,8 @@ class FocusHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(HomeController(), permanent: true);
+    final controller = Get.find<HomeController>();
+    final systems = Get.find<SystemsController>();
     return SafeArea(
       child: Column(
         children: [
@@ -35,18 +39,19 @@ class FocusHomeScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  Obx(
-                    () => _SystemCard(
+                  Obx(() {
+                    systems.tasks;
+                    return _SystemCard(
                       title: 'Morning Routine',
                       tag: 'ACTIVE SYSTEM',
                       subtitle: 'Daily Progress',
-                      valueText: controller.activeProgressText,
-                      progress: controller.activeProgress.value,
-                      footerLeft: '2',
-                      footerText: '3 steps remaining',
+                      valueText: systems.morningPercentText,
+                      progress: systems.morningProgress,
+                      footerLeft: '${systems.remainingCount}',
+                      footerText: '${systems.remainingCount} steps remaining',
                       accentColor: const Color(0xFF2B7E5F),
-                    ),
-                  ),
+                    );
+                  }),
                   const SizedBox(height: 12),
                   Obx(
                     () => _SystemCard(
@@ -55,9 +60,12 @@ class FocusHomeScreen extends StatelessWidget {
                       subtitle: 'Current Session',
                       valueText: controller.sessionRemainingText,
                       progress: controller.currentSessionProgress.value,
-                      footerLeft: 'Phase: Research & Analysis',
+                      footerLeft: controller.phaseLabel.value,
                       footerText: 'Resume',
                       accentColor: const Color(0xFF234EB8),
+                      onResume: Get.isRegistered<FocusNavController>()
+                          ? () => Get.find<FocusNavController>().setTab(2)
+                          : null,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -83,9 +91,90 @@ class FocusHomeScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 22),
+                  Obx(() {
+                    if (controller.userSystems.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Your systems',
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF143064),
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          ...controller.userSystems
+                              .take(6)
+                              .map(
+                                (s) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: const Color(0xFFE8EAF2),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                s.tag,
+                                                style: const TextStyle(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Color(0xFF4A987E),
+                                                  letterSpacing: 0.4,
+                                                ),
+                                              ),
+                                              Text(
+                                                s.name,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFF2C3550),
+                                                ),
+                                              ),
+                                              Text(
+                                                '${s.focusLine} · ${s.frequency}',
+                                                style: const TextStyle(
+                                                  fontSize: 10,
+                                                  color: Color(0xFF8A92A8),
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                        ],
+                      ),
+                    );
+                  }),
                   Center(
                     child: FilledButton(
-                      onPressed: () {},
+                      onPressed: () => Get.to(() => const CreateSystemScreen()),
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFF0A2C88),
                         foregroundColor: Colors.white,
@@ -126,6 +215,7 @@ class _SystemCard extends StatelessWidget {
     required this.footerLeft,
     required this.footerText,
     required this.accentColor,
+    this.onResume,
   });
 
   final String title;
@@ -136,6 +226,7 @@ class _SystemCard extends StatelessWidget {
   final String footerLeft;
   final String footerText;
   final Color accentColor;
+  final VoidCallback? onResume;
 
   @override
   Widget build(BuildContext context) {
@@ -196,21 +287,43 @@ class _SystemCard extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Expanded(
-                child: Text(
-                  footerText,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: footerText == 'Resume'
-                        ? const Color(0xFF0F398F)
-                        : const Color(0xFF8A92A8),
-                    fontWeight: footerText == 'Resume'
-                        ? FontWeight.w700
-                        : FontWeight.w500,
-                  ),
-                  textAlign: footerText == 'Resume'
-                      ? TextAlign.right
-                      : TextAlign.left,
-                ),
+                child: onResume != null && footerText == 'Resume'
+                    ? Align(
+                        alignment: Alignment.centerRight,
+                        child: InkWell(
+                          onTap: onResume,
+                          borderRadius: BorderRadius.circular(4),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 2,
+                            ),
+                            child: Text(
+                              footerText,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Color(0xFF0F398F),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    : Text(
+                        footerText,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: footerText == 'Resume'
+                              ? const Color(0xFF0F398F)
+                              : const Color(0xFF8A92A8),
+                          fontWeight: footerText == 'Resume'
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                        textAlign: footerText == 'Resume'
+                            ? TextAlign.right
+                            : TextAlign.left,
+                      ),
               ),
             ],
           ),

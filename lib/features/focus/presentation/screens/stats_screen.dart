@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:water_drink_app/core/firebase/app_firebase.dart';
+import 'package:water_drink_app/data/repositories/user_repository.dart';
+import 'package:water_drink_app/data/services/auth_service.dart';
+import 'package:water_drink_app/features/focus/controllers/home_controller.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_app_bar.dart';
 
 class StatsScreen extends StatelessWidget {
@@ -6,6 +11,7 @@ class StatsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final h = Get.find<HomeController>();
     return SafeArea(
       child: Column(
         children: [
@@ -13,35 +19,47 @@ class StatsScreen extends StatelessWidget {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Your Progress',
-                    style: TextStyle(
-                      color: Color(0xFF163E90),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 34 / 1.8,
+              child: Obx(() {
+                h.weeklyHeights;
+                h.weeklyHighlightIndex.value;
+                h.statsStreakDays.value;
+                h.statsCompletionRate.value;
+                h.statsFocusDepthSeconds.value;
+                h.statsFocusDepthDeltaPct.value;
+                h.statsMonthlyDone.value;
+                h.statsMonthlyTotal.value;
+                h.statsQuote.value;
+                h.efficiencyRows;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Your Progress',
+                      style: TextStyle(
+                        color: Color(0xFF163E90),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 34 / 1.8,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Review your consistency and refine your\nmental clarity.',
-                    style: TextStyle(color: Color(0xFF7E869D), fontSize: 12),
-                  ),
-                  const SizedBox(height: 14),
-                  const _WeeklyCompletionCard(),
-                  const SizedBox(height: 10),
-                  const _MomentumCard(),
-                  const SizedBox(height: 10),
-                  const _SmallInsightCard(),
-                  const SizedBox(height: 10),
-                  const _GoalCard(),
-                  const SizedBox(height: 10),
-                  const _EfficiencyCard(),
-                  const SizedBox(height: 12),
-                ],
-              ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Review your consistency and refine your\nmental clarity.',
+                      style: TextStyle(color: Color(0xFF7E869D), fontSize: 12),
+                    ),
+                    const SizedBox(height: 14),
+                    _WeeklyCompletionCard(h: h),
+                    const SizedBox(height: 10),
+                    _MomentumCard(h: h),
+                    const SizedBox(height: 10),
+                    _SmallInsightCard(h: h),
+                    const SizedBox(height: 10),
+                    _GoalCard(h: h),
+                    const SizedBox(height: 10),
+                    _EfficiencyCard(h: h),
+                    const SizedBox(height: 12),
+                  ],
+                );
+              }),
             ),
           ),
         ],
@@ -51,10 +69,14 @@ class StatsScreen extends StatelessWidget {
 }
 
 class _WeeklyCompletionCard extends StatelessWidget {
-  const _WeeklyCompletionCard();
+  const _WeeklyCompletionCard({required this.h});
+
+  final HomeController h;
 
   @override
   Widget build(BuildContext context) {
+    final heights = h.weeklyHeights;
+    final hi = h.weeklyHighlightIndex.value.clamp(0, 6);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -86,15 +108,11 @@ class _WeeklyCompletionCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: const [
-              _Bar(height: 20),
-              _Bar(height: 36),
-              _Bar(height: 52, highlighted: true),
-              _Bar(height: 30),
-              _Bar(height: 46),
-              _Bar(height: 20),
-              _Bar(height: 14),
-            ],
+            children: List.generate(7, (i) {
+              final raw = i < heights.length ? heights[i] : 0.2;
+              final px = 12.0 + raw * 40;
+              return _Bar(height: px, highlighted: i == hi);
+            }),
           ),
           const SizedBox(height: 6),
           const Row(
@@ -116,10 +134,14 @@ class _WeeklyCompletionCard extends StatelessWidget {
 }
 
 class _MomentumCard extends StatelessWidget {
-  const _MomentumCard();
+  const _MomentumCard({required this.h});
+
+  final HomeController h;
 
   @override
   Widget build(BuildContext context) {
+    final streak = h.statsStreakDays.value;
+    final rate = h.statsCompletionRate.value;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -140,9 +162,9 @@ class _MomentumCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            '7 Day',
-            style: TextStyle(
+          Text(
+            '$streak Day',
+            style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w700,
               fontSize: 36 / 1.6,
@@ -153,9 +175,9 @@ class _MomentumCard extends StatelessWidget {
             style: TextStyle(color: Color(0xFFB9C5EA), fontSize: 11),
           ),
           const SizedBox(height: 10),
-          const Text(
-            '85%',
-            style: TextStyle(
+          Text(
+            '${(rate * 100).round()}%',
+            style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w700,
               fontSize: 36 / 1.6,
@@ -168,7 +190,7 @@ class _MomentumCard extends StatelessWidget {
           const SizedBox(height: 12),
           Center(
             child: FilledButton(
-              onPressed: () {},
+              onPressed: _onViewFullReport,
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF93E6C4),
                 foregroundColor: const Color(0xFF0D4D3B),
@@ -192,10 +214,13 @@ class _MomentumCard extends StatelessWidget {
 }
 
 class _SmallInsightCard extends StatelessWidget {
-  const _SmallInsightCard();
+  const _SmallInsightCard({required this.h});
+
+  final HomeController h;
 
   @override
   Widget build(BuildContext context) {
+    final delta = h.statsFocusDepthDeltaPct.value;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -204,8 +229,8 @@ class _SmallInsightCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE8EAF2)),
       ),
       child: Row(
-        children: const [
-          CircleAvatar(
+        children: [
+          const CircleAvatar(
             radius: 15,
             backgroundColor: Color(0xFFE7EBF6),
             child: Icon(
@@ -214,26 +239,26 @@ class _SmallInsightCard extends StatelessWidget {
               color: Color(0xFF0E3A8F),
             ),
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Average Focus Depth',
                   style: TextStyle(fontSize: 10, color: Color(0xFF8990A5)),
                 ),
-                SizedBox(height: 1),
+                const SizedBox(height: 1),
                 Text(
-                  '42m 12s',
-                  style: TextStyle(
+                  h.focusDepthFormatted,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF163E90),
                   ),
                 ),
                 Text(
-                  '+ 12% from last week',
-                  style: TextStyle(
+                  '+ $delta% from last week',
+                  style: const TextStyle(
                     fontSize: 9.5,
                     color: Color(0xFF5D9F87),
                     fontWeight: FontWeight.w600,
@@ -249,10 +274,14 @@ class _SmallInsightCard extends StatelessWidget {
 }
 
 class _GoalCard extends StatelessWidget {
-  const _GoalCard();
+  const _GoalCard({required this.h});
+
+  final HomeController h;
 
   @override
   Widget build(BuildContext context) {
+    final done = h.statsMonthlyDone.value;
+    final total = h.statsMonthlyTotal.value;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -262,16 +291,16 @@ class _GoalCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Row(
+          Row(
             children: [
-              Text(
+              const Text(
                 'Monthly Goal',
                 style: TextStyle(fontSize: 10, color: Color(0xFF8D95AA)),
               ),
-              Spacer(),
+              const Spacer(),
               Text(
-                '18 / 25 Tasks',
-                style: TextStyle(
+                '$done / $total Tasks',
+                style: const TextStyle(
                   fontSize: 10,
                   color: Color(0xFF1D3D8F),
                   fontWeight: FontWeight.w700,
@@ -282,19 +311,21 @@ class _GoalCard extends StatelessWidget {
           const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(30),
-            child: const LinearProgressIndicator(
-              value: 0.72,
+            child: LinearProgressIndicator(
+              value: h.monthlyGoalProgress,
               minHeight: 4,
-              backgroundColor: Color(0xFFE2E6EF),
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF98E7C9)),
+              backgroundColor: const Color(0xFFE2E6EF),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFF98E7C9),
+              ),
             ),
           ),
           const SizedBox(height: 6),
-          const Align(
+          Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              '"You are 5 days ahead of schedule."',
-              style: TextStyle(fontSize: 9.5, color: Color(0xFF8A92A8)),
+              '"${h.statsQuote.value}"',
+              style: const TextStyle(fontSize: 9.5, color: Color(0xFF8A92A8)),
             ),
           ),
         ],
@@ -304,10 +335,13 @@ class _GoalCard extends StatelessWidget {
 }
 
 class _EfficiencyCard extends StatelessWidget {
-  const _EfficiencyCard();
+  const _EfficiencyCard({required this.h});
+
+  final HomeController h;
 
   @override
   Widget build(BuildContext context) {
+    final rows = h.efficiencyRows;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -317,8 +351,8 @@ class _EfficiencyCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Row(
+        children: [
+          const Row(
             children: [
               Text(
                 'System Efficiency',
@@ -331,26 +365,17 @@ class _EfficiencyCard extends StatelessWidget {
               Icon(Icons.more_horiz, size: 16, color: Color(0xFF8A92A8)),
             ],
           ),
-          SizedBox(height: 8),
-          _EfficiencyRow(
-            title: 'Morning Routine',
-            subtitle: 'Optimized for clarity',
-            score: '98%',
-            status: 'Peak',
-          ),
-          SizedBox(height: 8),
-          _EfficiencyRow(
-            title: 'Deep Focus Blocks',
-            subtitle: 'High cognitive load',
-            score: '74%',
-            status: 'Stable',
-          ),
-          SizedBox(height: 8),
-          _EfficiencyRow(
-            title: 'Evening Review',
-            subtitle: 'Consistent tracking',
-            score: '82%',
-            status: 'Increasing',
+          const SizedBox(height: 8),
+          ...rows.map(
+            (e) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _EfficiencyRow(
+                title: e.title,
+                subtitle: e.subtitle,
+                score: e.score,
+                status: e.status,
+              ),
+            ),
           ),
         ],
       ),
@@ -456,3 +481,19 @@ class _Bar extends StatelessWidget {
 }
 
 const _dayStyle = TextStyle(fontSize: 9, color: Color(0xFF9AA1B5));
+
+Future<void> _onViewFullReport() async {
+  if (!AppFirebase.isReady ||
+      !Get.isRegistered<AuthService>() ||
+      !Get.isRegistered<UserRepository>()) {
+    Get.snackbar('Hydra', 'Connect Firebase to sync report views');
+    return;
+  }
+  final uid = Get.find<AuthService>().currentUid;
+  if (uid == null) {
+    Get.snackbar('Hydra', 'Signing in… try again in a moment');
+    return;
+  }
+  await Get.find<UserRepository>().recordStatsReportOpened(uid);
+  Get.snackbar('Hydra', 'Report view saved to your profile');
+}

@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:water_drink_app/core/firebase/app_firebase.dart';
+import 'package:water_drink_app/data/repositories/user_repository.dart';
+import 'package:water_drink_app/data/services/auth_service.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_app_bar.dart';
 
 class FocusSessionsScreen extends StatelessWidget {
@@ -46,7 +50,7 @@ class FocusSessionsScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   FilledButton(
-                    onPressed: () {},
+                    onPressed: () => _onFocusPrompt(completed: true),
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF082F86),
                       foregroundColor: Colors.white,
@@ -65,7 +69,7 @@ class FocusSessionsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   OutlinedButton(
-                    onPressed: () {},
+                    onPressed: () => _onFocusPrompt(completed: false),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF8B93A9),
                       padding: const EdgeInsets.symmetric(
@@ -91,4 +95,26 @@ class FocusSessionsScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _onFocusPrompt({required bool completed}) async {
+  if (!AppFirebase.isReady ||
+      !Get.isRegistered<AuthService>() ||
+      !Get.isRegistered<UserRepository>()) {
+    Get.snackbar(
+      'Hydra',
+      completed ? 'Marked done (offline)' : 'Skipped (offline)',
+    );
+    return;
+  }
+  final uid = Get.find<AuthService>().currentUid;
+  if (uid == null) {
+    Get.snackbar('Hydra', 'Not signed in');
+    return;
+  }
+  await Get.find<UserRepository>().recordFocusPrompt(uid, completed: completed);
+  Get.snackbar(
+    'Hydra',
+    completed ? 'Great — logged to Firebase' : 'Skip logged',
+  );
 }

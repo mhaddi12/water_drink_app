@@ -67,8 +67,10 @@ class DefaultFirebaseOptions {
     projectId: 'simple-app-f309d',
     databaseURL: 'https://simple-app-f309d-default-rtdb.firebaseio.com',
     storageBucket: 'simple-app-f309d.firebasestorage.app',
-    androidClientId: '12117966625-2blcn9e1bseacq254kds0nv758i0vvt2.apps.googleusercontent.com',
-    iosClientId: '12117966625-var13jksfc5psai0nsq1o89vvu18kobq.apps.googleusercontent.com',
+    androidClientId:
+        '12117966625-2blcn9e1bseacq254kds0nv758i0vvt2.apps.googleusercontent.com',
+    iosClientId:
+        '12117966625-var13jksfc5psai0nsq1o89vvu18kobq.apps.googleusercontent.com',
     iosBundleId: 'com.hydra.waterTracker',
   );
 
@@ -79,8 +81,10 @@ class DefaultFirebaseOptions {
     projectId: 'simple-app-f309d',
     databaseURL: 'https://simple-app-f309d-default-rtdb.firebaseio.com',
     storageBucket: 'simple-app-f309d.firebasestorage.app',
-    androidClientId: '12117966625-2blcn9e1bseacq254kds0nv758i0vvt2.apps.googleusercontent.com',
-    iosClientId: '12117966625-var13jksfc5psai0nsq1o89vvu18kobq.apps.googleusercontent.com',
+    androidClientId:
+        '12117966625-2blcn9e1bseacq254kds0nv758i0vvt2.apps.googleusercontent.com',
+    iosClientId:
+        '12117966625-var13jksfc5psai0nsq1o89vvu18kobq.apps.googleusercontent.com',
     iosBundleId: 'com.hydra.waterTracker',
   );
 

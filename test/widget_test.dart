@@ -6,10 +6,22 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:get/get.dart';
 import 'package:water_drink_app/app/app.dart';
+import 'package:water_drink_app/features/focus/controllers/focus_nav_controller.dart';
+import 'package:water_drink_app/features/focus/controllers/home_controller.dart';
+import 'package:water_drink_app/features/focus/controllers/systems_controller.dart';
 
 void main() {
+  setUp(() {
+    Get.reset();
+    Get.put(HomeController(), permanent: true);
+    Get.put(SystemsController(), permanent: true);
+    Get.put(FocusNavController(), permanent: true);
+  });
+
+  tearDown(Get.reset);
+
   testWidgets('renders focus home first design screen', (
     WidgetTester tester,
   ) async {
