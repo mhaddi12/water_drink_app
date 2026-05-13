@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:water_drink_app/core/firebase/app_firebase.dart';
+import 'package:water_drink_app/core/session/session_reset.dart';
 import 'package:water_drink_app/data/services/auth_service.dart';
+import 'package:water_drink_app/features/auth/presentation/screens/auth_screen.dart';
 
 class FocusAppBar extends StatelessWidget {
   const FocusAppBar({
@@ -40,7 +42,7 @@ class FocusAppBar extends StatelessWidget {
                     color: Color(0xFF143D90),
                   )
                 : IconButton(
-                    onPressed: onLeadingTap ?? () {},
+                    onPressed: onLeadingTap ?? () => Get.back(),
                     icon: Icon(leading, size: 18),
                     color: const Color(0xFF143D90),
                     splashRadius: 20,
@@ -86,7 +88,17 @@ class _FocusProfileAvatar extends StatelessWidget {
         Get.find<AuthService>().currentUser != null;
 
     if (!canUseAuth) {
-      return avatar;
+      return InkWell(
+        onTap: () {
+          if (AppFirebase.isReady && Get.isRegistered<AuthService>()) {
+            Get.to(() => const AuthScreen());
+            return;
+          }
+          Get.snackbar('Hydra', 'Sign in to manage your account');
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: avatar,
+      );
     }
 
     return InkWell(
@@ -175,6 +187,7 @@ class _FocusProfileAvatar extends StatelessWidget {
                   if (ok == true && ctx.mounted) {
                     Navigator.pop(ctx);
                     await auth.signOut();
+                    SessionReset.afterSignOut();
                   }
                 },
                 style: FilledButton.styleFrom(

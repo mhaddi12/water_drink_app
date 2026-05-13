@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:water_drink_app/data/models/focus_system.dart';
 import 'package:water_drink_app/features/focus/controllers/focus_nav_controller.dart';
 import 'package:water_drink_app/features/focus/controllers/home_controller.dart';
 import 'package:water_drink_app/features/focus/controllers/systems_controller.dart';
 import 'package:water_drink_app/features/focus/presentation/screens/create_system_screen.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_app_bar.dart';
+import 'package:water_drink_app/features/focus/presentation/widgets/focus_ui.dart';
 
 class FocusHomeScreen extends StatelessWidget {
   const FocusHomeScreen({super.key});
@@ -19,32 +21,23 @@ class FocusHomeScreen extends StatelessWidget {
           const FocusAppBar(),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 4),
-                  Text(
-                    'Build your system.',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF143064),
-                    ),
+                  const FocusPageHeader(
+                    title: 'Build your system',
+                    subtitle: 'Manage your focus with intentionality.',
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Manage your focus with intentionality',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF7A8299),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
                   Obx(() {
+                    controller.userSystems;
                     systems.tasks;
+                    final routine = _systemOfKind(controller, 'routine');
                     return _SystemCard(
-                      title: 'Morning Routine',
-                      tag: 'ACTIVE SYSTEM',
-                      subtitle: 'Daily Progress',
+                      title: routine?.name ?? 'Morning Routine',
+                      tag: routine?.tag ?? 'ACTIVE SYSTEM',
+                      subtitle: routine?.focusLine ?? 'Daily progress',
                       valueText: systems.morningPercentText,
                       progress: systems.morningProgress,
                       footerLeft: '${systems.remainingCount}',
@@ -54,19 +47,22 @@ class FocusHomeScreen extends StatelessWidget {
                   }),
                   const SizedBox(height: 12),
                   Obx(
-                    () => _SystemCard(
-                      title: 'Study System',
-                      tag: 'DEEP WORK',
-                      subtitle: 'Current Session',
-                      valueText: controller.sessionRemainingText,
-                      progress: controller.currentSessionProgress.value,
-                      footerLeft: controller.phaseLabel.value,
-                      footerText: 'Resume',
-                      accentColor: const Color(0xFF234EB8),
-                      onResume: Get.isRegistered<FocusNavController>()
-                          ? () => Get.find<FocusNavController>().setTab(2)
-                          : null,
-                    ),
+                    () {
+                      final deepWork = _systemOfKind(controller, 'deep_work');
+                      return _SystemCard(
+                        title: deepWork?.name ?? 'Study System',
+                        tag: deepWork?.tag ?? 'DEEP WORK',
+                        subtitle: deepWork?.focusLine ?? 'Current session',
+                        valueText: controller.sessionRemainingText,
+                        progress: controller.currentSessionProgress.value,
+                        footerLeft: controller.phaseLabel.value,
+                        footerText: 'Open focus',
+                        accentColor: const Color(0xFF234EB8),
+                        onResume: Get.isRegistered<FocusNavController>()
+                            ? () => Get.find<FocusNavController>().setTab(2)
+                            : null,
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
                   Obx(
@@ -105,7 +101,7 @@ class FocusHomeScreen extends StatelessWidget {
                             style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF143064),
+                                  color: FocusUi.ink,
                                 ),
                           ),
                           const SizedBox(height: 8),
@@ -114,18 +110,10 @@ class FocusHomeScreen extends StatelessWidget {
                               .map(
                                 (s) => Padding(
                                   padding: const EdgeInsets.only(bottom: 8),
-                                  child: Container(
-                                    width: double.infinity,
+                                  child: FocusSurface(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 10,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: const Color(0xFFE8EAF2),
-                                      ),
+                                      horizontal: 14,
+                                      vertical: 12,
                                     ),
                                     child: Row(
                                       children: [
@@ -176,16 +164,16 @@ class FocusHomeScreen extends StatelessWidget {
                     child: FilledButton(
                       onPressed: () => Get.to(() => const CreateSystemScreen()),
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF0A2C88),
+                        backgroundColor: FocusUi.navy,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
+                          horizontal: 20,
                           vertical: 12,
                         ),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         visualDensity: VisualDensity.compact,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         textStyle: const TextStyle(
                           fontWeight: FontWeight.w600,
@@ -203,6 +191,13 @@ class FocusHomeScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+FocusSystem? _systemOfKind(HomeController controller, String kind) {
+  for (final system in controller.userSystems) {
+    if (system.kind == kind) return system;
+  }
+  return null;
 }
 
 class _SystemCard extends StatelessWidget {
@@ -230,12 +225,8 @@ class _SystemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-      ),
+    return FocusSurface(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -287,7 +278,7 @@ class _SystemCard extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Expanded(
-                child: onResume != null && footerText == 'Resume'
+                child: onResume != null && footerText == 'Open focus'
                     ? Align(
                         alignment: Alignment.centerRight,
                         child: InkWell(
@@ -313,14 +304,14 @@ class _SystemCard extends StatelessWidget {
                         footerText,
                         style: TextStyle(
                           fontSize: 10,
-                          color: footerText == 'Resume'
+                          color: footerText == 'Open focus'
                               ? const Color(0xFF0F398F)
                               : const Color(0xFF8A92A8),
-                          fontWeight: footerText == 'Resume'
+                          fontWeight: footerText == 'Open focus'
                               ? FontWeight.w700
                               : FontWeight.w500,
                         ),
-                        textAlign: footerText == 'Resume'
+                        textAlign: footerText == 'Open focus'
                             ? TextAlign.right
                             : TextAlign.left,
                       ),
@@ -346,12 +337,8 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 76,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.75),
-        borderRadius: BorderRadius.circular(10),
-      ),
+    return FocusSurface(
+      padding: const EdgeInsets.symmetric(vertical: 14),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

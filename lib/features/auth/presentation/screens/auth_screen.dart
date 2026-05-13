@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:water_drink_app/core/firebase/app_firebase.dart';
+import 'package:water_drink_app/core/session/app_session.dart';
 import 'package:water_drink_app/data/services/auth_service.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_input_decoration.dart';
 
@@ -39,6 +40,10 @@ class _AuthScreenState extends State<AuthScreen>
   Future<void> _submitSignIn() async {
     if (!_formKey.currentState!.validate()) return;
     if (!Get.isRegistered<AuthService>()) return;
+    if (!AppSession.isOnline) {
+      Get.snackbar('Hydra', 'Check your internet connection and try again.');
+      return;
+    }
     setState(() => _busy = true);
     try {
       await Get.find<AuthService>().signInWithEmail(
@@ -57,6 +62,10 @@ class _AuthScreenState extends State<AuthScreen>
   Future<void> _submitRegister() async {
     if (!_formKey.currentState!.validate()) return;
     if (!Get.isRegistered<AuthService>()) return;
+    if (!AppSession.isOnline) {
+      Get.snackbar('Hydra', 'Check your internet connection and try again.');
+      return;
+    }
     setState(() => _busy = true);
     try {
       await Get.find<AuthService>().registerWithEmail(
@@ -79,6 +88,10 @@ class _AuthScreenState extends State<AuthScreen>
       Get.snackbar('Hydra', 'Enter your email above first');
       return;
     }
+    if (!AppSession.isOnline) {
+      Get.snackbar('Hydra', 'Check your internet connection and try again.');
+      return;
+    }
     setState(() => _busy = true);
     try {
       await Get.find<AuthService>().sendPasswordResetEmail(email);
@@ -92,6 +105,10 @@ class _AuthScreenState extends State<AuthScreen>
 
   Future<void> _continueAsGuest() async {
     if (!Get.isRegistered<AuthService>()) return;
+    if (!AppSession.isOnline) {
+      Get.snackbar('Hydra', 'Check your internet connection and try again.');
+      return;
+    }
     setState(() => _busy = true);
     try {
       await Get.find<AuthService>().signInAnonymously();

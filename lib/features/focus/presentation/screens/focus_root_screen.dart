@@ -6,6 +6,7 @@ import 'package:water_drink_app/features/focus/presentation/screens/focus_sessio
 import 'package:water_drink_app/features/focus/presentation/screens/stats_screen.dart';
 import 'package:water_drink_app/features/focus/presentation/screens/systems_screen.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/test_banner_ad.dart';
+import 'package:water_drink_app/features/hydration/presentation/screens/hydration_home_screen.dart';
 
 class FocusRootScreen extends GetView<FocusNavController> {
   const FocusRootScreen({super.key});
@@ -15,6 +16,7 @@ class FocusRootScreen extends GetView<FocusNavController> {
     SystemsScreen(),
     FocusSessionsScreen(),
     StatsScreen(),
+    HydrationHomeScreen(),
   ];
 
   @override
@@ -46,6 +48,11 @@ class FocusRootScreen extends GetView<FocusNavController> {
                 NavigationDestination(
                   icon: Icon(Icons.assessment_outlined),
                   label: 'STATS',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.water_drop_outlined),
+                  selectedIcon: Icon(Icons.water_drop),
+                  label: 'WATER',
                 ),
               ],
             ),

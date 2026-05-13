@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:water_drink_app/core/firebase/app_firebase.dart';
-import 'package:water_drink_app/data/repositories/user_repository.dart';
-import 'package:water_drink_app/data/services/auth_service.dart';
+import 'package:water_drink_app/features/focus/controllers/home_controller.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_app_bar.dart';
+import 'package:water_drink_app/features/focus/presentation/widgets/focus_ui.dart';
 
 class FocusSessionsScreen extends StatelessWidget {
   const FocusSessionsScreen({super.key});
@@ -14,83 +13,94 @@ class FocusSessionsScreen extends StatelessWidget {
       child: Column(
         children: [
           const FocusAppBar(),
-          const Spacer(flex: 3),
-          Container(
-            width: 58,
-            height: 58,
-            decoration: const BoxDecoration(
-              color: Color(0xFF92E6C4),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.water_drop,
-              color: Color(0xFF1A7E5B),
-              size: 26,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Drink water',
-            style: TextStyle(
-              fontSize: 34 / 1.8,
-              color: Color(0xFF113D90),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Gently re-centering your physical needs.',
-            style: TextStyle(fontSize: 11, color: Color(0xFF8B92A7)),
-          ),
-          const Spacer(flex: 4),
-          Center(
+          Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  FilledButton(
-                    onPressed: () => _onFocusPrompt(completed: true),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF082F86),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 28,
-                        vertical: 12,
-                      ),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                  const Spacer(),
+                  FocusSurface(
+                    padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F6EF),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Icon(
+                            Icons.water_drop_rounded,
+                            color: FocusUi.accent,
+                            size: 30,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          'Drink water',
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                color: FocusUi.inkSoft,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Gently re-centering your physical needs before the next focus block.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: FocusUi.muted,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: () => _onFocusPrompt(completed: true),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: FocusUi.navy,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              textStyle: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            child: const Text('Done'),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: () => _onFocusPrompt(completed: false),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: FocusUi.muted,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              side: const BorderSide(color: FocusUi.line),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              textStyle: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            child: const Text('Skip for now'),
+                          ),
+                        ),
+                      ],
                     ),
-                    child: const Text('Done'),
                   ),
-                  const SizedBox(height: 8),
-                  OutlinedButton(
-                    onPressed: () => _onFocusPrompt(completed: false),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF8B93A9),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 28,
-                        vertical: 12,
-                      ),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                      side: const BorderSide(color: Color(0xFFD1D7E3)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                    child: const Text('Skip'),
-                  ),
+                  const Spacer(flex: 2),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 22),
         ],
       ),
     );
@@ -98,23 +108,10 @@ class FocusSessionsScreen extends StatelessWidget {
 }
 
 Future<void> _onFocusPrompt({required bool completed}) async {
-  if (!AppFirebase.isReady ||
-      !Get.isRegistered<AuthService>() ||
-      !Get.isRegistered<UserRepository>()) {
-    Get.snackbar(
-      'Hydra',
-      completed ? 'Marked done (offline)' : 'Skipped (offline)',
-    );
-    return;
-  }
-  final uid = Get.find<AuthService>().currentUid;
-  if (uid == null) {
-    Get.snackbar('Hydra', 'Not signed in');
-    return;
-  }
-  await Get.find<UserRepository>().recordFocusPrompt(uid, completed: completed);
+  final home = Get.find<HomeController>();
+  await home.applyFocusPrompt(completed: completed);
   Get.snackbar(
     'Hydra',
-    completed ? 'Great — logged to Firebase' : 'Skip logged',
+    completed ? 'Hydration break logged' : 'Skipped for now',
   );
 }

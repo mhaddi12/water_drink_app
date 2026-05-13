@@ -1,10 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:water_drink_app/core/firebase/app_firebase.dart';
+import 'package:water_drink_app/core/session/app_session.dart';
+import 'package:water_drink_app/core/session/local_profile_store.dart';
 import 'package:water_drink_app/data/models/routine_task.dart';
 import 'package:water_drink_app/data/repositories/user_repository.dart';
-import 'package:water_drink_app/data/services/auth_service.dart';
 import 'package:water_drink_app/features/focus/controllers/systems_controller.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_app_bar.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_input_decoration.dart';
@@ -50,22 +50,35 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
     final title = _titleCtrl.text.trim();
     final subtitle = _subtitleCtrl.text.trim();
 
-    if (!AppFirebase.isReady ||
-        !Get.isRegistered<AuthService>() ||
-        !Get.isRegistered<UserRepository>()) {
-      if (Get.isRegistered<SystemsController>()) {
-        final c = Get.find<SystemsController>();
-        await c.saveTaskOfflineFirst(
-          title: title,
-          subtitle: subtitle,
-          existing: widget.existing,
+    if (!AppSession.canSync) {
+      final local = Get.find<LocalProfileStore>();
+      final systems = Get.find<SystemsController>();
+      if (widget.existing != null) {
+        local.upsertTask(
+          widget.existing!.copyWith(title: title, subtitle: subtitle),
+        );
+      } else {
+        final order = systems.tasks.isEmpty
+            ? 0
+            : systems.tasks.map((e) => e.order).reduce((a, b) => a > b ? a : b) +
+                  1;
+        local.upsertTask(
+          RoutineTask(
+            id: 'local_${DateTime.now().millisecondsSinceEpoch}',
+            title: title,
+            subtitle: subtitle,
+            done: false,
+            order: order,
+          ),
         );
       }
+      systems.applyLocalDefaults();
       if (mounted) Get.back();
+      Get.snackbar('Hydra', widget.isEditing ? 'Task updated' : 'Task added');
       return;
     }
 
-    final uid = Get.find<AuthService>().currentUid;
+    final uid = AppSession.uid;
     if (uid == null) {
       Get.snackbar('Hydra', 'Not signed in yet. Please try again.');
       return;
@@ -131,17 +144,15 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
     );
     if (ok != true) return;
 
-    if (!AppFirebase.isReady ||
-        !Get.isRegistered<AuthService>() ||
-        !Get.isRegistered<UserRepository>()) {
-      if (Get.isRegistered<SystemsController>()) {
-        Get.find<SystemsController>().deleteTaskLocal(widget.existing!.id);
-      }
+    if (!AppSession.canSync) {
+      Get.find<LocalProfileStore>().removeTask(widget.existing!.id);
+      Get.find<SystemsController>().applyLocalDefaults();
       if (mounted) Get.back();
+      Get.snackbar('Hydra', 'Task removed');
       return;
     }
 
-    final uid = Get.find<AuthService>().currentUid;
+    final uid = AppSession.uid;
     if (uid == null) return;
 
     setState(() => _deleting = true);

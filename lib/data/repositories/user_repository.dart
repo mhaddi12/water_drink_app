@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import 'package:water_drink_app/core/firebase/app_firebase.dart';
 import 'package:water_drink_app/data/models/focus_system.dart';
+import 'package:water_drink_app/data/models/hydration_intake.dart';
+import 'package:water_drink_app/data/models/reminder_slot.dart';
 import 'package:water_drink_app/data/models/routine_task.dart';
 
 class UserRepository extends GetxService {
@@ -17,6 +19,20 @@ class UserRepository extends GetxService {
 
   CollectionReference<Map<String, dynamic>> focusSystemsRef(String uid) =>
       userRef(uid).collection('focus_systems');
+
+  CollectionReference<Map<String, dynamic>> hydrationIntakesRef(String uid) =>
+      userRef(uid).collection('hydration_intakes');
+
+  Stream<List<HydrationIntake>> watchHydrationIntakes(
+    String uid, {
+    required DateTime since,
+  }) {
+    return hydrationIntakesRef(uid)
+        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(since))
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map(HydrationIntake.fromDoc).toList());
+  }
 
   Stream<DocumentSnapshot<Map<String, dynamic>>> watchUser(String uid) {
     return userRef(uid).snapshots();
@@ -50,36 +66,109 @@ class UserRepository extends GetxService {
     'studySessionProgress': 0.0,
     'streakDays': 0,
     'focusHours': 0.0,
-    'morningStepsRemaining': 0,
+    'morningStepsRemaining': 3,
     'statsStreakDays': 0,
     'statsCompletionRate': 0.0,
     'statsFocusDepthSeconds': 0,
     'statsFocusDepthDeltaPct': 0,
     'statsMonthlyDone': 0,
-    'statsMonthlyTotal': 0,
+    'statsMonthlyTotal': 30,
     'statsQuote': 'Start tracking to see insights here.',
     'weeklyHeights': List<double>.filled(7, 0.0),
     'weeklyHighlightIndex': 0,
-    'phaseLabel': 'Get started',
+    'phaseLabel': 'Study System',
     'systemsCreated': 0,
     'statsReportViews': 0,
-    'routineDurationMin': 0,
+    'statsReportScope': 'week',
+    'routineDurationMin': 45,
     'routineFrequency': 'Daily',
-    'efficiency': <Map<String, dynamic>>[],
+    'displayName': 'Hydra user',
+    'hydrationGoalMl': 3000,
+    'reminderFrequencyHours': 2,
+    'theme': 'light',
+    'hydrationWeeklyAverageMl': 0,
+    'hydrationWeeklyDeltaPct': 0,
+    'hydrationBestDayMl': 0,
+    'hydrationBestDayLabel': '—',
+    'reminderSlots': defaultReminderSlots(),
+    'efficiency': defaultEfficiencyRows(),
     'updatedAt': FieldValue.serverTimestamp(),
   };
 
-  /// No sample tasks — new users add their own under Systems.
-  static List<RoutineTask> defaultTasks() => const [];
+  /// Starter routine tasks for new accounts.
+  static List<RoutineTask> defaultTasks() => const [
+    RoutineTask(
+      id: 'starter_hydrate',
+      title: 'Drink water',
+      subtitle: '250 ml',
+      done: false,
+      order: 0,
+    ),
+    RoutineTask(
+      id: 'starter_plan',
+      title: 'Plan the day',
+      subtitle: '5 min',
+      done: false,
+      order: 1,
+    ),
+    RoutineTask(
+      id: 'starter_move',
+      title: 'Short movement',
+      subtitle: 'Stretch or walk',
+      done: false,
+      order: 2,
+    ),
+  ];
+
+  static List<Map<String, dynamic>> defaultEfficiencyRows() => const [
+    {
+      'title': 'Morning Routine',
+      'subtitle': 'Consistency score',
+      'score': '0%',
+      'status': 'Starter',
+    },
+    {
+      'title': 'Study System',
+      'subtitle': 'Deep work quality',
+      'score': '0%',
+      'status': 'Starter',
+    },
+    {
+      'title': 'Hydration Rhythm',
+      'subtitle': 'Daily pacing',
+      'score': '0%',
+      'status': 'Starter',
+    },
+    {
+      'title': 'Weekly Review',
+      'subtitle': 'Reflection cadence',
+      'score': '0%',
+      'status': 'Starter',
+    },
+  ];
+
+  static List<Map<String, dynamic>> defaultReminderSlots() => const [
+    {'time': '8:00 AM', 'enabled': true, 'order': 0},
+    {'time': '10:00 AM', 'enabled': true, 'order': 1},
+    {'time': '12:00 PM', 'enabled': true, 'order': 2},
+    {'time': '2:00 PM', 'enabled': false, 'order': 3},
+    {'time': '4:00 PM', 'enabled': true, 'order': 4},
+    {'time': '6:00 PM', 'enabled': true, 'order': 5},
+  ];
 
   Future<void> ensureSeed(String uid) async {
     if (!AppFirebase.isReady) return;
-    final ref = userRef(uid);
-    final snap = await ref.get();
-    if (!snap.exists) {
-      await ref.set(defaultUserPayload());
+    try {
+      final ref = userRef(uid);
+      final snap = await ref.get();
+      if (!snap.exists) {
+        await ref.set(defaultUserPayload());
+      }
+      await _ensureTasksSeed(uid);
+      await _ensureSystemsSeed(uid);
+    } catch (_) {
+      rethrow;
     }
-    await _ensureTasksSeed(uid);
   }
 
   Future<void> _ensureTasksSeed(String uid) async {
@@ -91,6 +180,71 @@ class UserRepository extends GetxService {
     for (final t in seed) {
       batch.set(tasksRef(uid).doc(t.id), t.toMap());
     }
+    await batch.commit();
+  }
+
+  Future<void> _ensureSystemsSeed(String uid) async {
+    final existing = await focusSystemsRef(uid).limit(1).get();
+    if (existing.docs.isNotEmpty) return;
+
+    final batch = _db.batch();
+    final now = FieldValue.serverTimestamp();
+    final starters = <Map<String, dynamic>>[
+      {
+        'name': 'Morning Routine',
+        'kind': 'routine',
+        'tag': 'ROUTINE',
+        'focusLine': 'Daily progress',
+        'frequency': 'Daily',
+        'targetMinutes': 45,
+      },
+      {
+        'name': 'Study System',
+        'kind': 'deep_work',
+        'tag': 'DEEP WORK',
+        'focusLine': 'Current session',
+        'frequency': 'Weekdays',
+        'targetMinutes': 60,
+      },
+      {
+        'name': 'Hydration Rhythm',
+        'kind': 'habit',
+        'tag': 'CUSTOM SYSTEM',
+        'focusLine': 'Stay on pace',
+        'frequency': 'Daily',
+      },
+      {
+        'name': 'Weekly Review',
+        'kind': 'habit',
+        'tag': 'CUSTOM SYSTEM',
+        'focusLine': 'Reflect and reset',
+        'frequency': 'Weekly',
+        'targetMinutes': 20,
+      },
+    ];
+
+    for (final starter in starters) {
+      final doc = focusSystemsRef(uid).doc();
+      batch.set(doc, {
+        ...starter,
+        'createdAt': now,
+      });
+    }
+
+    batch.set(
+      userRef(uid),
+      {
+        'systemsCreated': starters.length,
+        'phaseLabel': 'Study System',
+        'routineFrequency': 'Daily',
+        'routineDurationMin': 45,
+        'studySessionProgress': 0.12,
+        'efficiency': defaultEfficiencyRows(),
+        'updatedAt': now,
+      },
+      SetOptions(merge: true),
+    );
+
     await batch.commit();
   }
 
@@ -189,6 +343,156 @@ class UserRepository extends GetxService {
       'statsReportViews': FieldValue.increment(1),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  Future<void> updateReportScope(String uid, String scope) async {
+    if (!AppFirebase.isReady) return;
+    await mergeUser(uid, {'statsReportScope': scope});
+  }
+
+  Future<void> addHydrationIntake(String uid, int amountMl) async {
+    if (!AppFirebase.isReady || amountMl <= 0) return;
+    await hydrationIntakesRef(uid).add({
+      'amountMl': amountMl,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    await _refreshHydrationInsights(uid);
+  }
+
+  Future<void> setReminderEnabled(
+    String uid, {
+    required String time,
+    required bool enabled,
+  }) async {
+    if (!AppFirebase.isReady) return;
+    final snap = await userRef(uid).get();
+    final data = snap.data() ?? {};
+    final raw = data['reminderSlots'] as List?;
+    final slots = _parseReminderSlots(raw);
+    final next = slots
+        .map(
+          (slot) => slot.time == time ? slot.copyWith(enabled: enabled) : slot,
+        )
+        .toList();
+    await mergeUser(uid, {
+      'reminderSlots': next.map((slot) => slot.toMap()).toList(),
+    });
+  }
+
+  Future<void> updateProfileSettings(
+    String uid, {
+    String? displayName,
+    int? hydrationGoalMl,
+    int? reminderFrequencyHours,
+    String? theme,
+  }) async {
+    if (!AppFirebase.isReady) return;
+    final updates = <String, dynamic>{};
+    if (displayName != null) {
+      updates['displayName'] = displayName.trim();
+    }
+    if (hydrationGoalMl != null) {
+      updates['hydrationGoalMl'] = hydrationGoalMl.clamp(250, 10000);
+    }
+    if (reminderFrequencyHours != null) {
+      updates['reminderFrequencyHours'] = reminderFrequencyHours.clamp(1, 12);
+    }
+    if (theme != null) {
+      updates['theme'] = theme;
+    }
+    if (updates.isEmpty) return;
+    await mergeUser(uid, updates);
+  }
+
+  Future<void> _refreshHydrationInsights(String uid) async {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, now.day).subtract(
+      const Duration(days: 13),
+    );
+    final snapshot = await hydrationIntakesRef(uid)
+        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+        .get();
+    final totals = <DateTime, int>{};
+    for (final doc in snapshot.docs) {
+      final intake = HydrationIntake.fromDoc(doc);
+      final day = DateTime(
+        intake.createdAt.year,
+        intake.createdAt.month,
+        intake.createdAt.day,
+      );
+      totals[day] = (totals[day] ?? 0) + intake.amountMl;
+    }
+
+    final thisWeek = List.generate(7, (index) {
+      final day = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(Duration(days: 6 - index));
+      return totals[day] ?? 0;
+    });
+    final lastWeek = List.generate(7, (index) {
+      final day = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(Duration(days: 13 - index));
+      return totals[day] ?? 0;
+    });
+
+    final weeklyAverage = thisWeek.isEmpty
+        ? 0
+        : (thisWeek.reduce((a, b) => a + b) / thisWeek.length).round();
+    final previousAverage = lastWeek.isEmpty
+        ? 0
+        : (lastWeek.reduce((a, b) => a + b) / lastWeek.length).round();
+    final deltaPct = previousAverage <= 0
+        ? 0
+        : (((weeklyAverage - previousAverage) / previousAverage) * 100)
+              .round();
+
+    var bestDayMl = 0;
+    var bestDayLabel = '—';
+    for (final entry in totals.entries) {
+      if (entry.value > bestDayMl) {
+        bestDayMl = entry.value;
+        bestDayLabel = _dayLabel(entry.key, now);
+      }
+    }
+
+    await mergeUser(uid, {
+      'hydrationWeeklyAverageMl': weeklyAverage,
+      'hydrationWeeklyDeltaPct': deltaPct,
+      'hydrationBestDayMl': bestDayMl,
+      'hydrationBestDayLabel': bestDayLabel,
+    });
+  }
+
+  static List<ReminderSlot> _parseReminderSlots(List<dynamic>? raw) {
+    if (raw == null || raw.isEmpty) {
+      return defaultReminderSlots().map(ReminderSlot.fromMap).toList();
+    }
+    return raw
+        .map((entry) => ReminderSlot.fromMap(Map<String, dynamic>.from(entry)))
+        .toList()
+      ..sort((a, b) => a.order.compareTo(b.order));
+  }
+
+  static String _dayLabel(DateTime day, DateTime now) {
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(day.year, day.month, day.day);
+    if (target == today) return 'Today';
+    if (target == today.subtract(const Duration(days: 1))) return 'Yesterday';
+    const labels = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    return labels[target.weekday - 1];
   }
 
   /// Persists a new focus system and updates the user profile when relevant.

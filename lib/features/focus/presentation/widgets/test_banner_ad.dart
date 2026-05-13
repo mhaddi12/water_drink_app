@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:water_drink_app/core/ads/ad_units.dart';
 
 class TestBannerAd extends StatefulWidget {
   const TestBannerAd({super.key});
@@ -13,15 +14,7 @@ class _TestBannerAdState extends State<TestBannerAd> {
   BannerAd? _bannerAd;
   bool _loaded = false;
 
-  String get _adUnitId {
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'ca-app-pub-3940256099942544/6300978111';
-    }
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return 'ca-app-pub-3940256099942544/2934735716';
-    }
-    return '';
-  }
+  String get _adUnitId => AdUnits.bannerForCurrentPlatform();
 
   @override
   void initState() {

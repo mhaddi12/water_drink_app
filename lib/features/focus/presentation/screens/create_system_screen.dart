@@ -1,9 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:water_drink_app/core/firebase/app_firebase.dart';
+import 'package:water_drink_app/core/session/app_session.dart';
+import 'package:water_drink_app/core/session/local_profile_store.dart';
+import 'package:water_drink_app/data/models/focus_system.dart';
 import 'package:water_drink_app/data/repositories/user_repository.dart';
-import 'package:water_drink_app/data/services/auth_service.dart';
+import 'package:water_drink_app/features/focus/controllers/home_controller.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_app_bar.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_input_decoration.dart';
 
@@ -43,20 +45,6 @@ class _CreateSystemScreenState extends State<CreateSystemScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (!AppFirebase.isReady ||
-        !Get.isRegistered<AuthService>() ||
-        !Get.isRegistered<UserRepository>()) {
-      Get.snackbar(
-        'Hydra',
-        'Cloud sync is unavailable. Check your connection and Firebase setup.',
-      );
-      return;
-    }
-    final uid = Get.find<AuthService>().currentUid;
-    if (uid == null) {
-      Get.snackbar('Hydra', 'Not signed in yet. Please wait and try again.');
-      return;
-    }
 
     int? minutes;
     final rawMin = _minutesCtrl.text.trim();
@@ -68,14 +56,40 @@ class _CreateSystemScreenState extends State<CreateSystemScreen> {
       }
     }
 
+    final name = _nameCtrl.text.trim();
+    final focusLine = _focusLineCtrl.text.trim();
+    final tag = switch (_kind) {
+      'deep_work' => 'DEEP WORK',
+      'routine' => 'ROUTINE',
+      _ => 'CUSTOM SYSTEM',
+    };
+
+    if (!AppSession.canSync) {
+      final system = FocusSystem(
+        id: 'local_${DateTime.now().millisecondsSinceEpoch}',
+        name: name,
+        kind: _kind,
+        tag: tag,
+        focusLine: focusLine.isEmpty ? 'Track consistently' : focusLine,
+        frequency: _frequency,
+        targetMinutes: minutes,
+        createdAt: DateTime.now(),
+      );
+      Get.find<LocalProfileStore>().addSystem(system);
+      Get.find<HomeController>().userSystems.insert(0, system);
+      if (mounted) Get.back();
+      Get.snackbar('Hydra', 'System saved on this device');
+      return;
+    }
+
     setState(() => _saving = true);
     try {
       await Get.find<UserRepository>().createFocusSystem(
-        uid,
-        name: _nameCtrl.text.trim(),
+        AppSession.uid!,
+        name: name,
         kind: _kind,
         frequency: _frequency,
-        focusLine: _focusLineCtrl.text.trim(),
+        focusLine: focusLine,
         targetMinutes: minutes,
       );
       if (mounted) Get.back();
@@ -85,7 +99,7 @@ class _CreateSystemScreenState extends State<CreateSystemScreen> {
         'Hydra',
         e.message ?? 'Could not save. Check Firestore rules.',
       );
-    } catch (e) {
+    } catch (_) {
       Get.snackbar('Hydra', 'Something went wrong. Try again.');
     } finally {
       if (mounted) setState(() => _saving = false);

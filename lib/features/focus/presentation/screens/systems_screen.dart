@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:water_drink_app/data/models/focus_system.dart';
 import 'package:water_drink_app/features/focus/controllers/home_controller.dart';
 import 'package:water_drink_app/features/focus/controllers/systems_controller.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_app_bar.dart';
+import 'package:water_drink_app/features/focus/presentation/widgets/focus_ui.dart';
 
 class SystemsScreen extends GetView<SystemsController> {
   const SystemsScreen({super.key});
@@ -21,44 +23,59 @@ class SystemsScreen extends GetView<SystemsController> {
                 final home = Get.find<HomeController>();
                 home.routineDurationMin.value;
                 home.routineFrequency.value;
+                home.userSystems;
                 final pct = controller.morningProgress;
+                final routine = _routineSystem(home);
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        const Text(
-                          'Morning Routine',
-                          style: TextStyle(
-                            fontSize: 34 / 1.8,
-                            color: Color(0xFF153C8D),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '${(pct * 100).round()}%',
-                          style: const TextStyle(
-                            color: Color(0xFF3F6B72),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
+                    FocusPageHeader(
+                      title: routine?.name ?? 'Morning routine',
+                      subtitle:
+                          'Track duration, frequency, and the steps that anchor your day.',
                     ),
-                    const SizedBox(height: 6),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(30),
-                      child: LinearProgressIndicator(
-                        value: pct.clamp(0.0, 1.0),
-                        minHeight: 5,
-                        backgroundColor: const Color(0xFFE2DFEA),
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFF87E4C3),
-                        ),
+                    const SizedBox(height: 14),
+                    FocusSurface(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'Today\'s progress',
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: FocusUi.inkSoft,
+                                    ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '${(pct * 100).round()}%',
+                                style: const TextStyle(
+                                  color: FocusUi.accent,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(30),
+                            child: LinearProgressIndicator(
+                              value: pct.clamp(0.0, 1.0),
+                              minHeight: 6,
+                              backgroundColor: const Color(0xFFE2DFEA),
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                FocusUi.accentMint,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
@@ -101,16 +118,16 @@ class SystemsScreen extends GetView<SystemsController> {
                       child: FilledButton(
                         onPressed: controller.openAddTask,
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF082F86),
+                          backgroundColor: FocusUi.navy,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
+                            horizontal: 18,
+                            vertical: 12,
                           ),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.compact,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                           textStyle: const TextStyle(
                             fontWeight: FontWeight.w600,
@@ -130,6 +147,13 @@ class SystemsScreen extends GetView<SystemsController> {
   }
 }
 
+FocusSystem? _routineSystem(HomeController home) {
+  for (final system in home.userSystems) {
+    if (system.kind == 'routine') return system;
+  }
+  return null;
+}
+
 class _MetricTile extends StatelessWidget {
   const _MetricTile({required this.title, required this.value});
 
@@ -138,13 +162,8 @@ class _MetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE8EAF2)),
-      ),
+    return FocusSurface(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -188,15 +207,9 @@ class _TaskTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFE8EAF2)),
-        ),
-        child: Row(
+    return FocusSurface(
+      padding: EdgeInsets.zero,
+      child: Row(
           children: [
             Expanded(
               child: InkWell(
@@ -261,13 +274,12 @@ class _TaskTile extends StatelessWidget {
             IconButton(
               onPressed: onEdit,
               icon: const Icon(Icons.edit_outlined, size: 18),
-              color: const Color(0xFF0F398F),
+              color: FocusUi.inkSoft,
               tooltip: 'Edit',
               splashRadius: 20,
             ),
           ],
         ),
-      ),
     );
   }
 }

@@ -1,75 +1,93 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:water_drink_app/features/reminders/controllers/reminders_controller.dart';
 
-class RemindersScreen extends StatelessWidget {
+class RemindersScreen extends GetView<RemindersController> {
   const RemindersScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Reminders',
-              style: textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
+      child: Obx(() {
+        controller.slots;
+        controller.reminderFrequencyHours.value;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Reminders',
+                style: textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Stay on track with smart alerts',
-              style: textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF667185),
+              const SizedBox(height: 6),
+              Text(
+                'Stay on track with smart alerts',
+                style: textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF667185),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFE3EBFF)),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFE3EBFF)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.notifications_active_outlined),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(controller.scheduleSummary)),
+                  ],
+                ),
               ),
-              child: Row(
-                children: const [
-                  Icon(Icons.notifications_active_outlined),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Reminder schedule active every 2 hours between 8 AM and 10 PM',
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 14),
+              Expanded(
+                child: controller.slots.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Reminder slots will sync from your Firebase profile.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Color(0xFF667185)),
+                        ),
+                      )
+                    : ListView(
+                        children: controller.slots
+                            .map(
+                              (slot) => _ReminderTile(
+                                time: slot.time,
+                                enabled: slot.enabled,
+                                onChanged: (enabled) =>
+                                    controller.toggleSlot(slot.time, enabled),
+                              ),
+                            )
+                            .toList(),
+                      ),
               ),
-            ),
-            const SizedBox(height: 14),
-            Expanded(
-              child: ListView(
-                children: const [
-                  _ReminderTile(time: '8:00 AM', enabled: true),
-                  _ReminderTile(time: '10:00 AM', enabled: true),
-                  _ReminderTile(time: '12:00 PM', enabled: true),
-                  _ReminderTile(time: '2:00 PM', enabled: false),
-                  _ReminderTile(time: '4:00 PM', enabled: true),
-                  _ReminderTile(time: '6:00 PM', enabled: true),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      }),
     );
   }
 }
 
 class _ReminderTile extends StatelessWidget {
-  const _ReminderTile({required this.time, required this.enabled});
+  const _ReminderTile({
+    required this.time,
+    required this.enabled,
+    required this.onChanged,
+  });
 
   final String time;
   final bool enabled;
+  final ValueChanged<bool> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +108,7 @@ class _ReminderTile extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
             ),
           ),
-          Switch(value: enabled, onChanged: (_) {}),
+          Switch(value: enabled, onChanged: onChanged),
         ],
       ),
     );

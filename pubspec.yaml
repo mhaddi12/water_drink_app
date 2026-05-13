@@ -1,5 +1,5 @@
 name: water_drink_app
-description: "A new Flutter project."
+description: "Hydra — focus systems and hydration tracking."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -39,6 +39,9 @@ dependencies:
   cloud_firestore: ^5.5.1
   get: ^4.7.2
   google_mobile_ads: ^6.0.0
+  flutter_native_splash: ^2.4.7
+  package_info_plus: ^9.0.1
+  internet_connection_checker_plus: ^3.0.0
 
 dev_dependencies:
   flutter_test:
@@ -51,6 +54,16 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+
+flutter_native_splash:
+  color: "#F2F1F7"
+  image: assets/branding/app_icon.png
+  android: true
+  ios: true
+  web: false
+  android_12:
+    color: "#F2F1F7"
+    image: assets/branding/app_icon.png
 
 flutter_launcher_icons:
   android: true
