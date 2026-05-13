@@ -15,6 +15,7 @@ class LocalProfileStore extends GetxService {
   final hydrationGoalMl = 3000.obs;
   final reminderFrequencyHours = 2.obs;
   final theme = 'light'.obs;
+  final activeHomeSystemId = RxnString();
 
   @override
   void onInit() {
@@ -45,6 +46,7 @@ class LocalProfileStore extends GetxService {
     hydrationGoalMl.value = 3000;
     reminderFrequencyHours.value = 2;
     theme.value = 'light';
+    activeHomeSystemId.value = null;
     seedDefaults();
   }
 
@@ -107,6 +109,10 @@ class LocalProfileStore extends GetxService {
 
   void addSystem(FocusSystem system) {
     systems.insert(0, system);
+  }
+
+  void setActiveHomeSystem(String? systemId) {
+    activeHomeSystemId.value = systemId;
   }
 
   String nextReminderLabel() {

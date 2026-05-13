@@ -11,8 +11,9 @@ import 'package:water_drink_app/features/focus/presentation/widgets/focus_input_
 
 /// Create or edit a morning routine task; persists to Firestore when available.
 class AddEditTaskScreen extends StatefulWidget {
-  const AddEditTaskScreen({super.key, this.existing});
+  const AddEditTaskScreen({super.key, required this.systemId, this.existing});
 
+  final String systemId;
   final RoutineTask? existing;
 
   bool get isEditing => existing != null;
@@ -58,9 +59,12 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
           widget.existing!.copyWith(title: title, subtitle: subtitle),
         );
       } else {
-        final order = systems.tasks.isEmpty
+        final order = systems.tasksForSystem(widget.systemId).isEmpty
             ? 0
-            : systems.tasks.map((e) => e.order).reduce((a, b) => a > b ? a : b) +
+            : systems
+                      .tasksForSystem(widget.systemId)
+                      .map((e) => e.order)
+                      .reduce((a, b) => a > b ? a : b) +
                   1;
         local.upsertTask(
           RoutineTask(
@@ -69,6 +73,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
             subtitle: subtitle,
             done: false,
             order: order,
+            systemId: widget.systemId,
           ),
         );
       }
@@ -92,9 +97,10 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         await repo.updateTask(uid, t);
       } else {
         final c = Get.find<SystemsController>();
-        final order = c.tasks.isEmpty
+        final scoped = c.tasksForSystem(widget.systemId);
+        final order = scoped.isEmpty
             ? 0
-            : c.tasks.map((e) => e.order).reduce((a, b) => a > b ? a : b) + 1;
+            : scoped.map((e) => e.order).reduce((a, b) => a > b ? a : b) + 1;
         final id = repo.nextTaskId(uid);
         await repo.addTask(
           uid,
@@ -104,6 +110,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
             subtitle: subtitle,
             done: false,
             order: order,
+            systemId: widget.systemId,
           ),
         );
       }

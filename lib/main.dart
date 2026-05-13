@@ -1,9 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:get/get.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:water_drink_app/app/app.dart';
+import 'package:water_drink_app/core/ads/ad_units.dart';
+import 'package:water_drink_app/core/ads/app_open_ad_controller.dart';
 import 'package:water_drink_app/core/firebase/app_firebase.dart';
 import 'package:water_drink_app/core/network/connectivity_controller.dart';
 import 'package:water_drink_app/core/session/local_profile_store.dart';
@@ -19,9 +22,19 @@ import 'package:water_drink_app/features/settings/controllers/settings_controlle
 Future<void> main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  await AppFirebase.initialize();
   if (!kIsWeb) {
-    MobileAds.instance.initialize();
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: Colors.transparent,
+      ),
+    );
+  }
+  await AppFirebase.initialize();
+  if (AdUnits.adsEnabled) {
+    await MobileAds.instance.initialize();
+    Get.put(AppOpenAdController(), permanent: true);
   }
   if (AppFirebase.isReady) {
     Get.put(AuthService(), permanent: true);

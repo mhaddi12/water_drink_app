@@ -7,6 +7,7 @@ import 'package:water_drink_app/core/session/app_session.dart';
 import 'package:water_drink_app/core/session/local_profile_store.dart';
 import 'package:water_drink_app/data/models/focus_system.dart';
 import 'package:water_drink_app/data/models/routine_task.dart';
+import 'package:water_drink_app/features/focus/controllers/systems_controller.dart';
 import 'package:water_drink_app/data/repositories/user_repository.dart';
 import 'package:water_drink_app/data/services/auth_service.dart';
 
@@ -34,6 +35,7 @@ class HomeController extends GetxController {
   final routineFrequency = 'Daily'.obs;
 
   final userSystems = <FocusSystem>[].obs;
+  final activeHomeSystemId = RxnString();
 
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _userSub;
   StreamSubscription<List<FocusSystem>>? _systemsSub;
@@ -54,6 +56,38 @@ class HomeController extends GetxController {
     final m = s ~/ 60;
     final sec = s % 60;
     return '${m}m ${sec.toString().padLeft(2, '0')}s';
+  }
+
+  FocusSystem? get activeHomeSystem {
+    final id = activeHomeSystemId.value;
+    if (id != null) {
+      for (final system in userSystems) {
+        if (system.id == id) return system;
+      }
+    }
+    return _firstSystemOfKind('routine') ?? (userSystems.isEmpty ? null : userSystems.first);
+  }
+
+  Future<void> setActiveHomeSystem(String systemId) async {
+    if (!userSystems.any((system) => system.id == systemId)) return;
+
+    activeHomeSystemId.value = systemId;
+    if (Get.isRegistered<LocalProfileStore>()) {
+      Get.find<LocalProfileStore>().setActiveHomeSystem(systemId);
+    }
+    if (Get.isRegistered<SystemsController>()) {
+      Get.find<SystemsController>().selectSystem(systemId);
+    }
+
+    if (!AppSession.canSync) return;
+    try {
+      await Get.find<UserRepository>().updateActiveHomeSystem(
+        AppSession.uid!,
+        systemId,
+      );
+    } catch (_) {
+      Get.snackbar('Hydra', 'Active system saved on this device only');
+    }
   }
 
   Future<void> setReportScope(String scope) async {
@@ -83,6 +117,7 @@ class HomeController extends GetxController {
     routineDurationMin.value = 45;
     routineFrequency.value = 'Daily';
     userSystems.clear();
+    activeHomeSystemId.value = null;
   }
 
   Future<void> applyFocusPrompt({required bool completed}) async {
@@ -149,6 +184,25 @@ class HomeController extends GetxController {
     if (!Get.isRegistered<LocalProfileStore>()) return;
     final local = Get.find<LocalProfileStore>();
     userSystems.assignAll(local.systems);
+    activeHomeSystemId.value = local.activeHomeSystemId.value;
+    _syncActiveHomeSystem();
+  }
+
+  FocusSystem? _firstSystemOfKind(String kind) {
+    for (final system in userSystems) {
+      if (system.kind == kind) return system;
+    }
+    return null;
+  }
+
+  void _syncActiveHomeSystem() {
+    final id = activeHomeSystemId.value;
+    if (id == null) return;
+    if (userSystems.any((system) => system.id == id)) return;
+    activeHomeSystemId.value = null;
+    if (Get.isRegistered<LocalProfileStore>()) {
+      Get.find<LocalProfileStore>().setActiveHomeSystem(null);
+    }
   }
 
   void _listenFocusSystems(String uid) {
@@ -157,6 +211,7 @@ class HomeController extends GetxController {
     _systemsSub = Get.find<UserRepository>().watchFocusSystems(uid).listen(
       (list) {
         userSystems.assignAll(list);
+        _syncActiveHomeSystem();
       },
       onError: (_) => _applyLocalSystems(),
     );
@@ -239,6 +294,13 @@ class HomeController extends GetxController {
         routineDurationMin.value;
     routineFrequency.value =
         data['routineFrequency'] as String? ?? routineFrequency.value;
+
+    final activeId = data['activeHomeSystemId'] as String?;
+    activeHomeSystemId.value = activeId;
+    if (Get.isRegistered<LocalProfileStore>()) {
+      Get.find<LocalProfileStore>().setActiveHomeSystem(activeId);
+    }
+    _syncActiveHomeSystem();
   }
 
   @override

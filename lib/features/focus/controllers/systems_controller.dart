@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:water_drink_app/core/session/app_session.dart';
 import 'package:water_drink_app/core/session/local_profile_store.dart';
+import 'package:water_drink_app/data/models/focus_system.dart';
 import 'package:water_drink_app/data/models/routine_task.dart';
 import 'package:water_drink_app/data/repositories/user_repository.dart';
 import 'package:water_drink_app/data/services/auth_service.dart';
@@ -12,6 +13,8 @@ import 'package:water_drink_app/features/focus/presentation/screens/add_edit_tas
 
 class SystemsController extends GetxController {
   final tasks = <RoutineTask>[].obs;
+  final selectedSystemId = RxnString();
+
   StreamSubscription<List<RoutineTask>>? _tasksSub;
   StreamSubscription<User?>? _authSub;
   double? _lastPushedMorningProgress;
@@ -19,11 +22,52 @@ class SystemsController extends GetxController {
 
   LocalProfileStore get _local => Get.find<LocalProfileStore>();
 
-  int get doneCount => tasks.where((t) => t.done).length;
-  int get remainingCount => tasks.where((t) => !t.done).length;
-  double get morningProgress => tasks.isEmpty ? 0.0 : doneCount / tasks.length;
+  List<FocusSystem> get availableSystems {
+    if (Get.isRegistered<HomeController>()) {
+      final remote = Get.find<HomeController>().userSystems;
+      if (remote.isNotEmpty) return remote;
+    }
+    return _local.systems;
+  }
 
-  String get morningPercentText => '${(morningProgress * 100).round()}%';
+  FocusSystem? get selectedSystem {
+    final id = selectedSystemId.value;
+    if (id == null) return null;
+    for (final system in availableSystems) {
+      if (system.id == id) return system;
+    }
+    return null;
+  }
+
+  List<RoutineTask> tasksForSystem(String? systemId) {
+    if (systemId == null) return const [];
+    return tasks
+        .where((task) => _taskMatchesSystem(task, systemId))
+        .toList()
+      ..sort((a, b) => a.order.compareTo(b.order));
+  }
+
+  List<RoutineTask> get selectedTasks => tasksForSystem(selectedSystemId.value);
+
+  int doneCountFor(String? systemId) =>
+      tasksForSystem(systemId).where((task) => task.done).length;
+
+  int remainingCountFor(String? systemId) =>
+      tasksForSystem(systemId).where((task) => !task.done).length;
+
+  double progressForSystem(String? systemId) {
+    final scoped = tasksForSystem(systemId);
+    if (scoped.isEmpty) return 0.0;
+    return doneCountFor(systemId) / scoped.length;
+  }
+
+  String progressTextFor(String? systemId) =>
+      '${(progressForSystem(systemId) * 100).round()}%';
+
+  int get doneCount => doneCountFor(selectedSystemId.value);
+  int get remainingCount => remainingCountFor(selectedSystemId.value);
+  double get morningProgress => progressForSystem(selectedSystemId.value);
+  String get morningPercentText => progressTextFor(selectedSystemId.value);
 
   String get streakLabel {
     if (!Get.isRegistered<HomeController>()) return '0 Days';
@@ -34,10 +78,35 @@ class SystemsController extends GetxController {
   void onInit() {
     super.onInit();
     _bind();
+    if (Get.isRegistered<HomeController>()) {
+      ever(Get.find<HomeController>().userSystems, (_) => _ensureSelectedSystem());
+    }
+    ever(_local.systems, (_) => _ensureSelectedSystem());
   }
 
   void applyLocalDefaults() {
     tasks.assignAll(_local.tasks);
+    _ensureSelectedSystem();
+  }
+
+  void selectSystem(String systemId) {
+    selectedSystemId.value = systemId;
+  }
+
+  void _ensureSelectedSystem() {
+    final systems = availableSystems;
+    if (systems.isEmpty) {
+      selectedSystemId.value = null;
+      return;
+    }
+
+    final current = selectedSystemId.value;
+    if (current != null && systems.any((system) => system.id == current)) {
+      return;
+    }
+
+    final routine = _firstRoutineSystem(systems);
+    selectedSystemId.value = routine?.id ?? systems.first.id;
   }
 
   void _bind() {
@@ -74,6 +143,7 @@ class SystemsController extends GetxController {
     _tasksSub = Get.find<UserRepository>().watchTasks(uid).listen(
       (list) {
         tasks.assignAll(list);
+        _ensureSelectedSystem();
         if (AppSession.canSync) {
           _pushMorningToUser(uid);
         }
@@ -84,8 +154,9 @@ class SystemsController extends GetxController {
 
   Future<void> _pushMorningToUser(String uid) async {
     if (!Get.isRegistered<UserRepository>()) return;
-    final p = morningProgress;
-    final r = remainingCount;
+    final routine = _firstRoutineSystem(availableSystems);
+    final p = progressForSystem(routine?.id);
+    final r = remainingCountFor(routine?.id);
     if (_lastPushedMorningProgress == p && _lastPushedRemaining == r) return;
     _lastPushedMorningProgress = p;
     _lastPushedRemaining = r;
@@ -121,11 +192,36 @@ class SystemsController extends GetxController {
   }
 
   void openAddTask() {
-    Get.to(() => const AddEditTaskScreen());
+    _ensureSelectedSystem();
+    final systemId = selectedSystemId.value;
+    if (systemId == null) {
+      Get.snackbar('Hydra', 'Create a system first.');
+      return;
+    }
+    Get.to(() => AddEditTaskScreen(systemId: systemId));
   }
 
   void openEditTask(RoutineTask task) {
-    Get.to(() => AddEditTaskScreen(existing: task));
+    final systemId = task.systemId ?? selectedSystemId.value;
+    if (systemId == null) {
+      Get.snackbar('Hydra', 'Choose a system first.');
+      return;
+    }
+    Get.to(() => AddEditTaskScreen(systemId: systemId, existing: task));
+  }
+
+  bool _taskMatchesSystem(RoutineTask task, String systemId) {
+    if (task.systemId != null) return task.systemId == systemId;
+
+    final routine = _firstRoutineSystem(availableSystems);
+    return routine?.id == systemId;
+  }
+
+  FocusSystem? _firstRoutineSystem(List<FocusSystem> systems) {
+    for (final system in systems) {
+      if (system.kind == 'routine') return system;
+    }
+    return null;
   }
 
   @override

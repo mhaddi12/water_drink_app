@@ -46,6 +46,10 @@
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UIStatusBarHidden</key>
+		<true/>
+		<key>GADApplicationIdentifier</key>
+		<string>ca-app-pub-8385354422515933~4260801485</string>
+		<key>UIViewControllerBasedStatusBarAppearance</key>
 		<false/>
 	</dict>
 </plist>

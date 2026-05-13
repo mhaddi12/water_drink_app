@@ -86,6 +86,7 @@ class UserRepository extends GetxService {
     'hydrationGoalMl': 3000,
     'reminderFrequencyHours': 2,
     'theme': 'light',
+    'activeHomeSystemId': null,
     'hydrationWeeklyAverageMl': 0,
     'hydrationWeeklyDeltaPct': 0,
     'hydrationBestDayMl': 0,
@@ -350,6 +351,11 @@ class UserRepository extends GetxService {
     await mergeUser(uid, {'statsReportScope': scope});
   }
 
+  Future<void> updateActiveHomeSystem(String uid, String? systemId) async {
+    if (!AppFirebase.isReady) return;
+    await mergeUser(uid, {'activeHomeSystemId': systemId});
+  }
+
   Future<void> addHydrationIntake(String uid, int amountMl) async {
     if (!AppFirebase.isReady || amountMl <= 0) return;
     await hydrationIntakesRef(uid).add({
@@ -496,7 +502,7 @@ class UserRepository extends GetxService {
   }
 
   /// Persists a new focus system and updates the user profile when relevant.
-  Future<void> createFocusSystem(
+  Future<String> createFocusSystem(
     String uid, {
     required String name,
     required String kind,
@@ -504,7 +510,7 @@ class UserRepository extends GetxService {
     required String focusLine,
     int? targetMinutes,
   }) async {
-    if (!AppFirebase.isReady) return;
+    if (!AppFirebase.isReady) return '';
     final doc = focusSystemsRef(uid).doc();
     final tag = switch (kind) {
       'deep_work' => 'DEEP WORK',
@@ -547,6 +553,7 @@ class UserRepository extends GetxService {
     }
 
     await mergeUser(uid, updates);
+    return doc.id;
   }
 
   static String _defaultFocusLine(String kind) {

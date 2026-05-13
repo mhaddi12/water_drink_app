@@ -12,6 +12,7 @@ class SystemsScreen extends GetView<SystemsController> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
+      bottom: false,
       child: Column(
         children: [
           const FocusAppBar(),
@@ -20,19 +21,61 @@ class SystemsScreen extends GetView<SystemsController> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               child: Obx(() {
                 controller.tasks;
+                controller.selectedSystemId.value;
                 final home = Get.find<HomeController>();
-                home.routineDurationMin.value;
-                home.routineFrequency.value;
                 home.userSystems;
+                final systems = controller.availableSystems;
+                final selected = controller.selectedSystem;
+                final scopedTasks = controller.selectedTasks;
                 final pct = controller.morningProgress;
-                final routine = _routineSystem(home);
+
+                if (systems.isEmpty) {
+                  return const FocusPageHeader(
+                    title: 'Your systems',
+                    subtitle:
+                        'Create a system on Home, then add the steps you want to complete each day.',
+                  );
+                }
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     FocusPageHeader(
-                      title: routine?.name ?? 'Morning routine',
+                      title: selected?.name ?? 'Your systems',
                       subtitle:
-                          'Track duration, frequency, and the steps that anchor your day.',
+                          'Pick a system, check off its steps, and keep each routine moving.',
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      height: 40,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: systems.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final system = systems[index];
+                          final active = system.id == selected?.id;
+                          return ChoiceChip(
+                            label: Text(system.name),
+                            selected: active,
+                            onSelected: (_) => controller.selectSystem(system.id),
+                            labelStyle: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: active
+                                  ? Colors.white
+                                  : const Color(0xFF3F485F),
+                            ),
+                            selectedColor: FocusUi.navy,
+                            backgroundColor: Colors.white,
+                            side: BorderSide(
+                              color: active
+                                  ? FocusUi.navy
+                                  : const Color(0xFFE2E5EE),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                     const SizedBox(height: 14),
                     FocusSurface(
@@ -81,14 +124,14 @@ class SystemsScreen extends GetView<SystemsController> {
                         Expanded(
                           child: _MetricTile(
                             title: 'DURATION',
-                            value: '${home.routineDurationMin.value} min',
+                            value: _durationLabel(selected),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: _MetricTile(
                             title: 'FREQUENCY',
-                            value: home.routineFrequency.value,
+                            value: selected?.frequency ?? 'Daily',
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -101,7 +144,17 @@ class SystemsScreen extends GetView<SystemsController> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    ...controller.tasks.map(
+                    if (scopedTasks.isEmpty)
+                      FocusSurface(
+                        child: Text(
+                          'No steps yet for ${selected?.name ?? 'this system'}. Add the tasks you want to complete.',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF7A8299),
+                          ),
+                        ),
+                      ),
+                    ...scopedTasks.map(
                       (t) => Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: _TaskTile(
@@ -147,11 +200,10 @@ class SystemsScreen extends GetView<SystemsController> {
   }
 }
 
-FocusSystem? _routineSystem(HomeController home) {
-  for (final system in home.userSystems) {
-    if (system.kind == 'routine') return system;
-  }
-  return null;
+String _durationLabel(FocusSystem? system) {
+  final minutes = system?.targetMinutes;
+  if (minutes == null || minutes <= 0) return 'Flexible';
+  return '$minutes min';
 }
 
 class _MetricTile extends StatelessWidget {
@@ -210,76 +262,76 @@ class _TaskTile extends StatelessWidget {
     return FocusSurface(
       padding: EdgeInsets.zero,
       child: Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                onTap: onTap,
-                borderRadius: BorderRadius.circular(10),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 18,
-                        height: 18,
-                        decoration: BoxDecoration(
+        children: [
+          Expanded(
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: done
+                            ? const Color(0xFFA1E5CB)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(5),
+                        border: Border.all(
                           color: done
-                              ? const Color(0xFFA1E5CB)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(5),
-                          border: Border.all(
-                            color: done
-                                ? const Color(0xFF4FB78C)
-                                : const Color(0xFFCAD0DD),
+                              ? const Color(0xFF4FB78C)
+                              : const Color(0xFFCAD0DD),
+                        ),
+                      ),
+                      child: done
+                          ? const Icon(
+                              Icons.check,
+                              size: 12,
+                              color: Color(0xFF1B5E3C),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 16 / 1.2,
+                              color: Color(0xFF3F485F),
+                            ),
                           ),
-                        ),
-                        child: done
-                            ? const Icon(
-                                Icons.check,
-                                size: 12,
-                                color: Color(0xFF1B5E3C),
-                              )
-                            : null,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              title,
-                              style: const TextStyle(
-                                fontSize: 16 / 1.2,
-                                color: Color(0xFF3F485F),
-                              ),
+                          Text(
+                            subtitle,
+                            style: const TextStyle(
+                              fontSize: 9,
+                              color: Color(0xFFA3A8B8),
                             ),
-                            Text(
-                              subtitle,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                color: Color(0xFFA3A8B8),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            IconButton(
-              onPressed: onEdit,
-              icon: const Icon(Icons.edit_outlined, size: 18),
-              color: FocusUi.inkSoft,
-              tooltip: 'Edit',
-              splashRadius: 20,
-            ),
-          ],
-        ),
+          ),
+          IconButton(
+            onPressed: onEdit,
+            icon: const Icon(Icons.edit_outlined, size: 18),
+            color: FocusUi.inkSoft,
+            tooltip: 'Edit',
+            splashRadius: 20,
+          ),
+        ],
+      ),
     );
   }
 }

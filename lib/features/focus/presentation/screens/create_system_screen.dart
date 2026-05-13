@@ -5,7 +5,9 @@ import 'package:water_drink_app/core/session/app_session.dart';
 import 'package:water_drink_app/core/session/local_profile_store.dart';
 import 'package:water_drink_app/data/models/focus_system.dart';
 import 'package:water_drink_app/data/repositories/user_repository.dart';
+import 'package:water_drink_app/features/focus/controllers/focus_nav_controller.dart';
 import 'package:water_drink_app/features/focus/controllers/home_controller.dart';
+import 'package:water_drink_app/features/focus/controllers/systems_controller.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_app_bar.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_input_decoration.dart';
 
@@ -77,14 +79,18 @@ class _CreateSystemScreenState extends State<CreateSystemScreen> {
       );
       Get.find<LocalProfileStore>().addSystem(system);
       Get.find<HomeController>().userSystems.insert(0, system);
+      Get.find<SystemsController>().selectSystem(system.id);
+      if (Get.isRegistered<FocusNavController>()) {
+        Get.find<FocusNavController>().setTab(1);
+      }
       if (mounted) Get.back();
-      Get.snackbar('Hydra', 'System saved on this device');
+      Get.snackbar('Hydra', 'System saved on this device. Add tasks in Systems.');
       return;
     }
 
     setState(() => _saving = true);
     try {
-      await Get.find<UserRepository>().createFocusSystem(
+      final systemId = await Get.find<UserRepository>().createFocusSystem(
         AppSession.uid!,
         name: name,
         kind: _kind,
@@ -92,8 +98,14 @@ class _CreateSystemScreenState extends State<CreateSystemScreen> {
         focusLine: focusLine,
         targetMinutes: minutes,
       );
+      if (systemId.isNotEmpty) {
+        Get.find<SystemsController>().selectSystem(systemId);
+        if (Get.isRegistered<FocusNavController>()) {
+          Get.find<FocusNavController>().setTab(1);
+        }
+      }
       if (mounted) Get.back();
-      Get.snackbar('Hydra', 'System created and synced');
+      Get.snackbar('Hydra', 'System created. Add tasks in Systems.');
     } on FirebaseException catch (e) {
       Get.snackbar(
         'Hydra',

@@ -15,6 +15,7 @@ class HydrationHomeScreen extends GetView<HydrationController> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return SafeArea(
+      bottom: false,
       child: Obx(() {
         controller.todayIntakes;
         controller.goalMl.value;

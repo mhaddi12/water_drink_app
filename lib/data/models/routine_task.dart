@@ -7,6 +7,7 @@ class RoutineTask {
     required this.subtitle,
     required this.done,
     required this.order,
+    this.systemId,
   });
 
   final String id;
@@ -14,12 +15,14 @@ class RoutineTask {
   final String subtitle;
   final bool done;
   final int order;
+  final String? systemId;
 
   Map<String, dynamic> toMap() => {
     'title': title,
     'subtitle': subtitle,
     'done': done,
     'order': order,
+    if (systemId != null) 'systemId': systemId,
   };
 
   factory RoutineTask.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -30,6 +33,7 @@ class RoutineTask {
       subtitle: d['subtitle'] as String? ?? '',
       done: d['done'] as bool? ?? false,
       order: (d['order'] as num?)?.toInt() ?? 0,
+      systemId: d['systemId'] as String?,
     );
   }
 
@@ -39,6 +43,7 @@ class RoutineTask {
     String? subtitle,
     bool? done,
     int? order,
+    String? systemId,
   }) {
     return RoutineTask(
       id: id ?? this.id,
@@ -46,6 +51,7 @@ class RoutineTask {
       subtitle: subtitle ?? this.subtitle,
       done: done ?? this.done,
       order: order ?? this.order,
+      systemId: systemId ?? this.systemId,
     );
   }
 }

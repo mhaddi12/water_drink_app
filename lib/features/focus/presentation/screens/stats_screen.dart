@@ -13,6 +13,7 @@ class StatsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<HomeController>();
     return SafeArea(
+      bottom: false,
       child: Column(
         children: [
           const FocusAppBar(),

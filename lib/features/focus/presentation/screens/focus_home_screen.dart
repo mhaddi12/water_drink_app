@@ -16,6 +16,7 @@ class FocusHomeScreen extends StatelessWidget {
     final controller = Get.find<HomeController>();
     final systems = Get.find<SystemsController>();
     return SafeArea(
+      bottom: false,
       child: Column(
         children: [
           const FocusAppBar(),
@@ -32,27 +33,59 @@ class FocusHomeScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Obx(() {
                     controller.userSystems;
+                    controller.activeHomeSystemId.value;
                     systems.tasks;
-                    final routine = _systemOfKind(controller, 'routine');
-                    return _SystemCard(
-                      title: routine?.name ?? 'Morning Routine',
-                      tag: routine?.tag ?? 'ACTIVE SYSTEM',
-                      subtitle: routine?.focusLine ?? 'Daily progress',
-                      valueText: systems.morningPercentText,
-                      progress: systems.morningProgress,
-                      footerLeft: '${systems.remainingCount}',
-                      footerText: '${systems.remainingCount} steps remaining',
-                      accentColor: const Color(0xFF2B7E5F),
+                    final active = controller.activeHomeSystem;
+                    final activeId = active?.id;
+                    return DragTarget<String>(
+                      onWillAcceptWithDetails: (details) =>
+                          details.data != activeId,
+                      onAcceptWithDetails: (details) {
+                        controller.setActiveHomeSystem(details.data);
+                      },
+                      builder: (context, candidate, rejected) {
+                        final isHovering = candidate.isNotEmpty;
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(FocusUi.radius),
+                            border: isHovering
+                                ? Border.all(
+                                    color: const Color(0xFF2B7E5F),
+                                    width: 2,
+                                  )
+                                : null,
+                          ),
+                          child: _SystemCard(
+                            title: active?.name ?? 'Morning Routine',
+                            tag: 'ACTIVE SYSTEM',
+                            subtitle: active?.focusLine ?? 'Daily progress',
+                            valueText: systems.progressTextFor(activeId),
+                            progress: systems.progressForSystem(activeId),
+                            footerLeft: '${systems.remainingCountFor(activeId)}',
+                            footerText:
+                                '${systems.remainingCountFor(activeId)} steps remaining',
+                            accentColor: _accentColorForKind(active?.kind),
+                            hint: isHovering
+                                ? 'Release to set active'
+                                : 'Drag a system here to feature it on Home',
+                          ),
+                        );
+                      },
                     );
                   }),
                   const SizedBox(height: 12),
                   Obx(
                     () {
                       final deepWork = _systemOfKind(controller, 'deep_work');
+                      if (deepWork == null ||
+                          deepWork.id == controller.activeHomeSystemId.value) {
+                        return const SizedBox.shrink();
+                      }
                       return _SystemCard(
-                        title: deepWork?.name ?? 'Study System',
-                        tag: deepWork?.tag ?? 'DEEP WORK',
-                        subtitle: deepWork?.focusLine ?? 'Current session',
+                        title: deepWork.name,
+                        tag: deepWork.tag,
+                        subtitle: deepWork.focusLine,
                         valueText: controller.sessionRemainingText,
                         progress: controller.currentSessionProgress.value,
                         footerLeft: controller.phaseLabel.value,
@@ -104,55 +137,33 @@ class FocusHomeScreen extends StatelessWidget {
                                   color: FocusUi.ink,
                                 ),
                           ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Long-press a system and drag it onto Active system.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF8A92A8),
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           ...controller.userSystems
                               .take(6)
                               .map(
                                 (s) => Padding(
                                   padding: const EdgeInsets.only(bottom: 8),
-                                  child: FocusSurface(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 12,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                s.tag,
-                                                style: const TextStyle(
-                                                  fontSize: 9,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: Color(0xFF4A987E),
-                                                  letterSpacing: 0.4,
-                                                ),
-                                              ),
-                                              Text(
-                                                s.name,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Color(0xFF2C3550),
-                                                ),
-                                              ),
-                                              Text(
-                                                '${s.focusLine} · ${s.frequency}',
-                                                style: const TextStyle(
-                                                  fontSize: 10,
-                                                  color: Color(0xFF8A92A8),
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                  child: _DraggableSystemTile(
+                                    system: s,
+                                    isActiveOnHome:
+                                        controller.activeHomeSystemId.value ==
+                                        s.id,
+                                    progressText:
+                                        systems.progressTextFor(s.id),
+                                    onOpen: () {
+                                      systems.selectSystem(s.id);
+                                      if (Get.isRegistered<FocusNavController>()) {
+                                        Get.find<FocusNavController>().setTab(1);
+                                      }
+                                    },
                                   ),
                                 ),
                               ),
@@ -200,6 +211,133 @@ FocusSystem? _systemOfKind(HomeController controller, String kind) {
   return null;
 }
 
+Color _accentColorForKind(String? kind) {
+  return switch (kind) {
+    'deep_work' => const Color(0xFF234EB8),
+    'routine' => const Color(0xFF2B7E5F),
+    _ => const Color(0xFF4A987E),
+  };
+}
+
+class _DraggableSystemTile extends StatelessWidget {
+  const _DraggableSystemTile({
+    required this.system,
+    required this.isActiveOnHome,
+    required this.progressText,
+    required this.onOpen,
+  });
+
+  final FocusSystem system;
+  final bool isActiveOnHome;
+  final String progressText;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final tile = FocusSurface(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Icon(
+            Icons.drag_indicator_rounded,
+            size: 18,
+            color: isActiveOnHome
+                ? const Color(0xFF2B7E5F)
+                : const Color(0xFFB8BFD0),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: InkWell(
+              onTap: onOpen,
+              borderRadius: BorderRadius.circular(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        system.tag,
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF4A987E),
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                      if (isActiveOnHome) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0x1A2B7E5F),
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                          child: const Text(
+                            'ON HOME',
+                            style: TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF2B7E5F),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  Text(
+                    system.name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2C3550),
+                    ),
+                  ),
+                  Text(
+                    '${system.focusLine} · ${system.frequency}',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFF8A92A8),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Text(
+            progressText,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF0F398F),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return LongPressDraggable<String>(
+      data: system.id,
+      feedback: Material(
+        color: Colors.transparent,
+        child: Opacity(
+          opacity: 0.92,
+          child: SizedBox(
+            width: MediaQuery.sizeOf(context).width - 32,
+            child: tile,
+          ),
+        ),
+      ),
+      childWhenDragging: Opacity(opacity: 0.35, child: tile),
+      child: tile,
+    );
+  }
+}
+
 class _SystemCard extends StatelessWidget {
   const _SystemCard({
     required this.title,
@@ -211,6 +349,7 @@ class _SystemCard extends StatelessWidget {
     required this.footerText,
     required this.accentColor,
     this.onResume,
+    this.hint,
   });
 
   final String title;
@@ -222,6 +361,7 @@ class _SystemCard extends StatelessWidget {
   final String footerText;
   final Color accentColor;
   final VoidCallback? onResume;
+  final String? hint;
 
   @override
   Widget build(BuildContext context) {
@@ -270,6 +410,16 @@ class _SystemCard extends StatelessWidget {
             valueColor: AlwaysStoppedAnimation<Color>(accentColor),
           ),
           const SizedBox(height: 8),
+          if (hint != null)
+            Text(
+              hint!,
+              style: TextStyle(
+                fontSize: 10,
+                color: accentColor.withValues(alpha: 0.85),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          if (hint != null) const SizedBox(height: 6),
           Row(
             children: [
               Text(
