@@ -56,24 +56,29 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 flutter_native_splash:
-  color: "#01425A"
-  image: assets/branding/splash_logo.png
+  color: "#FFFFFF"
+  image: assets/branding/splash_icon_hd.png
+  branding: assets/branding/splash_branding_hydra.png
   android: true
   ios: true
   web: false
   android_gravity: center
   ios_content_mode: center
+  branding_mode: bottom
+  branding_bottom_padding: 48
   fullscreen: true
   android_12:
-    color: "#01425A"
-    image: assets/branding/splash_logo.png
-    icon_background_color: "#01425A"
+    color: "#FFFFFF"
+    image: assets/branding/splash_android12_icon.png
+    branding: assets/branding/splash_branding_hydra.png
 
 flutter_launcher_icons:
   android: true
   ios: true
   image_path: assets/branding/app_icon.png
   remove_alpha_ios: true
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: assets/branding/app_icon.png
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -87,9 +92,10 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/branding/app_logo.png
     - assets/branding/app_icon.png
-    - assets/branding/splash_logo.png
+    - assets/branding/splash_icon_hd.png
+    - assets/branding/splash_android12_icon.png
+    - assets/branding/splash_branding_hydra.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
