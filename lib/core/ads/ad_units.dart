@@ -30,7 +30,10 @@ abstract final class AdUnits {
   static const String _iosAppOpenTest =
       'ca-app-pub-3940256099942544/5662855259';
 
-  static bool get adsEnabled => !kIsWeb;
+  static bool get adsEnabled =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
 
   static String bannerForCurrentPlatform() {
     if (!adsEnabled) return '';

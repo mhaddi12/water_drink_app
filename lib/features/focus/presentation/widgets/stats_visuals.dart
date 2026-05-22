@@ -33,7 +33,7 @@ class WeeklyCompletionCard extends StatelessWidget {
             'Weekly completion',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              color: FocusUi.inkSoft,
+              color: FocusUi.inkSoft(context),
             ),
           ),
           const SizedBox(height: 16),
@@ -61,9 +61,9 @@ class WeeklyCompletionCard extends StatelessWidget {
                   .map(
                     (day) => Text(
                       day,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
-                        color: FocusUi.muted,
+                        color: FocusUi.muted(context),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -182,10 +182,10 @@ class FocusDepthCard extends StatelessWidget {
               color: const Color(0xFFE7EBF6),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.timelapse_rounded,
               size: 20,
-              color: FocusUi.inkSoft,
+              color: FocusUi.inkSoft(context),
             ),
           ),
           const SizedBox(width: 12),
@@ -193,22 +193,22 @@ class FocusDepthCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Average focus depth',
-                  style: TextStyle(fontSize: 12, color: FocusUi.muted),
+                  style: TextStyle(fontSize: 12, color: FocusUi.muted(context)),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   durationLabel,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 18,
-                    color: FocusUi.inkSoft,
+                    color: FocusUi.inkSoft(context),
                   ),
                 ),
                 Text(
                   '+ $deltaPct% from last week',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     color: FocusUi.accent,
                     fontWeight: FontWeight.w600,
@@ -245,16 +245,16 @@ class MonthlyGoalCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text(
+              Text(
                 'Monthly goal',
-                style: TextStyle(fontSize: 12, color: FocusUi.muted),
+                style: TextStyle(fontSize: 12, color: FocusUi.muted(context)),
               ),
               const Spacer(),
               Text(
                 '$done / $total tasks',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: FocusUi.inkSoft,
+                  color: FocusUi.inkSoft(context),
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -266,7 +266,7 @@ class MonthlyGoalCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 6,
-              backgroundColor: const Color(0xFFE2E6EF),
+              backgroundColor: FocusUi.line(context),
               valueColor: const AlwaysStoppedAnimation<Color>(
                 FocusUi.accentMint,
               ),
@@ -275,7 +275,7 @@ class MonthlyGoalCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             '"$quote"',
-            style: const TextStyle(fontSize: 12, color: FocusUi.muted),
+            style: TextStyle(fontSize: 12, color: FocusUi.muted(context)),
           ),
         ],
       ),
@@ -305,16 +305,16 @@ class EfficiencyListCard extends StatelessWidget {
                 title,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: FocusUi.inkSoft,
+                  color: FocusUi.inkSoft(context),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
           if (rows.isEmpty)
-            const Text(
+            Text(
               'Complete a few systems to unlock efficiency insights.',
-              style: TextStyle(fontSize: 12, color: FocusUi.muted),
+              style: TextStyle(fontSize: 12, color: FocusUi.muted(context)),
             )
           else
             ...rows.map(
@@ -345,10 +345,10 @@ class EfficiencyRow extends StatelessWidget {
             color: const Color(0xFFE7EBF6),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.grid_view_rounded,
             size: 16,
-            color: FocusUi.inkSoft,
+            color: FocusUi.inkSoft(context),
           ),
         ),
         const SizedBox(width: 12),
@@ -366,7 +366,7 @@ class EfficiencyRow extends StatelessWidget {
               ),
               Text(
                 entry.subtitle,
-                style: const TextStyle(fontSize: 11, color: FocusUi.muted),
+                style: TextStyle(fontSize: 11, color: FocusUi.muted(context)),
               ),
             ],
           ),
@@ -376,14 +376,14 @@ class EfficiencyRow extends StatelessWidget {
           children: [
             Text(
               entry.score,
-              style: const TextStyle(
-                color: FocusUi.inkSoft,
+              style: TextStyle(
+                color: FocusUi.inkSoft(context),
                 fontWeight: FontWeight.w700,
               ),
             ),
             Text(
               entry.status,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 color: FocusUi.accent,
                 fontWeight: FontWeight.w600,
@@ -476,7 +476,7 @@ class _WeeklyBar extends StatelessWidget {
               day,
               style: TextStyle(
                 fontSize: 10,
-                color: highlighted ? FocusUi.inkSoft : FocusUi.muted,
+                color: highlighted ? FocusUi.inkSoft(context) : FocusUi.muted(context),
                 fontWeight: highlighted ? FontWeight.w700 : FontWeight.w500,
               ),
             ),

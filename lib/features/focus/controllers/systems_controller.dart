@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:water_drink_app/core/session/app_session.dart';
+import 'package:water_drink_app/core/stats/system_stats_helper.dart';
 import 'package:water_drink_app/core/session/local_profile_store.dart';
 import 'package:water_drink_app/data/models/focus_system.dart';
 import 'package:water_drink_app/data/models/routine_task.dart';
@@ -17,8 +18,7 @@ class SystemsController extends GetxController {
 
   StreamSubscription<List<RoutineTask>>? _tasksSub;
   StreamSubscription<User?>? _authSub;
-  double? _lastPushedMorningProgress;
-  int? _lastPushedRemaining;
+  String? _lastPushedStatsKey;
 
   LocalProfileStore get _local => Get.find<LocalProfileStore>();
 
@@ -112,6 +112,7 @@ class SystemsController extends GetxController {
   void _bind() {
     if (!AppSession.hasCloud) {
       applyLocalDefaults();
+      scheduleMicrotask(() => _onTasksChanged(null));
       return;
     }
 
@@ -122,8 +123,7 @@ class SystemsController extends GetxController {
       if (uid == null) {
         _tasksSub?.cancel();
         applyLocalDefaults();
-        _lastPushedMorningProgress = null;
-        _lastPushedRemaining = null;
+        _lastPushedStatsKey = null;
         return;
       }
       final seeded = await AppSession.ensureUserSeed();
@@ -138,30 +138,50 @@ class SystemsController extends GetxController {
   void _listenTasks(String uid) {
     if (!Get.isRegistered<UserRepository>()) return;
     _tasksSub?.cancel();
-    _lastPushedMorningProgress = null;
-    _lastPushedRemaining = null;
+    _lastPushedStatsKey = null;
     _tasksSub = Get.find<UserRepository>().watchTasks(uid).listen(
       (list) {
         tasks.assignAll(list);
         _ensureSelectedSystem();
-        if (AppSession.canSync) {
-          _pushMorningToUser(uid);
-        }
+        _onTasksChanged(uid);
       },
       onError: (_) => applyLocalDefaults(),
     );
   }
 
-  Future<void> _pushMorningToUser(String uid) async {
+  void _onTasksChanged(String? uid) {
+    if (Get.isRegistered<HomeController>()) {
+      Get.find<HomeController>().refreshDerivedStats();
+    }
+    if (uid != null && AppSession.canSync) {
+      unawaited(_pushDerivedStatsToUser(uid));
+    }
+  }
+
+  SystemStatsSnapshot _statsSnapshot() {
+    final home = Get.isRegistered<HomeController>()
+        ? Get.find<HomeController>()
+        : null;
+    final systems = home != null && home.userSystems.isNotEmpty
+        ? home.userSystems
+        : availableSystems;
+    final activeId = home?.activeHomeSystemId.value ?? _local.activeHomeSystemId.value;
+    return SystemStatsHelper.compute(
+      systems: systems,
+      tasks: tasks,
+      activeSystemId: activeId,
+    );
+  }
+
+  Future<void> _pushDerivedStatsToUser(String uid) async {
     if (!Get.isRegistered<UserRepository>()) return;
-    final routine = _firstRoutineSystem(availableSystems);
-    final p = progressForSystem(routine?.id);
-    final r = remainingCountFor(routine?.id);
-    if (_lastPushedMorningProgress == p && _lastPushedRemaining == r) return;
-    _lastPushedMorningProgress = p;
-    _lastPushedRemaining = r;
+    final snap = _statsSnapshot();
+    final key =
+        '${snap.completionRate}_${snap.monthlyDone}_${snap.monthlyTotal}_${snap.activeProgress}_${snap.activeRemaining}_${snap.efficiency.map((row) => row.score).join('|')}';
+    if (_lastPushedStatsKey == key) return;
+    _lastPushedStatsKey = key;
     try {
-      await Get.find<UserRepository>().syncMorningProgress(uid, p, r);
+      await Get.find<UserRepository>().syncDerivedStats(uid, snap);
     } catch (_) {}
   }
 

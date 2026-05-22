@@ -121,11 +121,12 @@ class _CreateSystemScreenState extends State<CreateSystemScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F2F7),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
             FocusAppBar(
+              showDrawerMenu: false,
               title: 'New system',
               leading: Icons.arrow_back_ios_new_rounded,
               onLeadingTap: () {
@@ -160,7 +161,7 @@ class _CreateSystemScreenState extends State<CreateSystemScreen> {
                       TextFormField(
                         controller: _nameCtrl,
                         textCapitalization: TextCapitalization.sentences,
-                        decoration: focusInputDecoration('System name *'),
+                        decoration: focusInputDecoration(context,'System name *'),
                         validator: (v) {
                           final t = v?.trim() ?? '';
                           if (t.isEmpty) return 'Enter a name';
@@ -275,7 +276,7 @@ class _CreateSystemScreenState extends State<CreateSystemScreen> {
                       TextFormField(
                         controller: _focusLineCtrl,
                         textCapitalization: TextCapitalization.sentences,
-                        decoration: focusInputDecoration(
+                        decoration: focusInputDecoration(context,
                           'Focus line (optional)',
                           hint: 'e.g. Morning clarity block',
                         ),
@@ -285,7 +286,7 @@ class _CreateSystemScreenState extends State<CreateSystemScreen> {
                       TextFormField(
                         controller: _minutesCtrl,
                         keyboardType: TextInputType.number,
-                        decoration: focusInputDecoration(
+                        decoration: focusInputDecoration(context,
                           'Target minutes (optional)',
                           hint: 'e.g. 45',
                         ),

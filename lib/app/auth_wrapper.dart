@@ -90,16 +90,12 @@ class _AuthBootstrapScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFFF1F2F7),
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
-        child: SizedBox(
-          width: 28,
-          height: 28,
-          child: CircularProgressIndicator(
-            strokeWidth: 2.5,
-            color: Color(0xFF0A2C88),
-          ),
+        child: CircularProgressIndicator(
+          strokeWidth: 2.5,
+          color: Theme.of(context).colorScheme.primary,
         ),
       ),
     );

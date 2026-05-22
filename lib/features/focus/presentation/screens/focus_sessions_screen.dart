@@ -42,17 +42,17 @@ class FocusSessionsScreen extends StatelessWidget {
                           'Drink water',
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
-                                color: FocusUi.inkSoft,
+                                color: FocusUi.inkSoft(context),
                                 fontWeight: FontWeight.w700,
                               ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'Gently re-centering your physical needs before the next focus block.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 13,
-                            color: FocusUi.muted,
+                            color: FocusUi.muted(context),
                             height: 1.4,
                           ),
                         ),
@@ -81,9 +81,9 @@ class FocusSessionsScreen extends StatelessWidget {
                           child: OutlinedButton(
                             onPressed: () => _onFocusPrompt(completed: false),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: FocusUi.muted,
+                              foregroundColor: FocusUi.muted(context),
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              side: const BorderSide(color: FocusUi.line),
+                              side: BorderSide(color: FocusUi.line(context)),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),

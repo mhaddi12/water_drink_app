@@ -1,27 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:water_drink_app/app/theme/hydra_theme_colors.dart';
 
 abstract final class FocusUi {
-  static const Color ink = Color(0xFF143064);
-  static const Color inkSoft = Color(0xFF163E90);
-  static const Color muted = Color(0xFF7A8299);
-  static const Color line = Color(0xFFE8EAF2);
   static const Color accent = Color(0xFF4A987E);
   static const Color accentMint = Color(0xFF93E6C4);
   static const Color navy = Color(0xFF082F86);
   static const double radius = 16;
 
-  static BoxDecoration surfaceDecoration({Color? color, Color? borderColor}) {
+  static HydraThemeColors _c(BuildContext context) => HydraThemeColors.of(context);
+
+  static Color ink(BuildContext context) => _c(context).ink;
+  static Color inkSoft(BuildContext context) => _c(context).inkSoft;
+  static Color muted(BuildContext context) => _c(context).muted;
+  static Color line(BuildContext context) => _c(context).line;
+  static Color surface(BuildContext context) => _c(context).surface;
+
+  static BoxDecoration surfaceDecoration(
+    BuildContext context, {
+    Color? color,
+    Color? borderColor,
+  }) {
+    final colors = _c(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return BoxDecoration(
-      color: color ?? Colors.white,
+      color: color ?? colors.surface,
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: borderColor ?? line),
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x0A152238),
-          blurRadius: 18,
-          offset: Offset(0, 8),
-        ),
-      ],
+      border: Border.all(color: borderColor ?? colors.line),
+      boxShadow: isDark
+          ? null
+          : [
+              BoxShadow(
+                color: colors.shadow,
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
     );
   }
 }
@@ -45,7 +58,7 @@ class FocusPageHeader extends StatelessWidget {
           title,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w700,
-            color: FocusUi.ink,
+            color: FocusUi.ink(context),
             height: 1.15,
           ),
         ),
@@ -53,7 +66,7 @@ class FocusPageHeader extends StatelessWidget {
         Text(
           subtitle,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: FocusUi.muted,
+            color: FocusUi.muted(context),
             height: 1.35,
           ),
         ),
@@ -66,18 +79,18 @@ class FocusSectionLabel extends StatelessWidget {
   const FocusSectionLabel({
     super.key,
     required this.label,
-    this.color = FocusUi.accent,
+    this.color,
   });
 
   final String label;
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     return Text(
       label.toUpperCase(),
       style: TextStyle(
-        color: color,
+        color: color ?? FocusUi.accent,
         fontWeight: FontWeight.w700,
         fontSize: 10,
         letterSpacing: 0.7,
@@ -106,6 +119,7 @@ class FocusSurface extends StatelessWidget {
       width: double.infinity,
       padding: padding,
       decoration: FocusUi.surfaceDecoration(
+        context,
         color: color,
         borderColor: borderColor,
       ),
@@ -120,13 +134,13 @@ class FocusMetricChip extends StatelessWidget {
     required this.label,
     required this.value,
     this.icon,
-    this.valueColor = FocusUi.inkSoft,
+    this.valueColor,
   });
 
   final String label;
   final String value;
   final IconData? icon;
-  final Color valueColor;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
@@ -138,15 +152,15 @@ class FocusMetricChip extends StatelessWidget {
           Row(
             children: [
               if (icon != null) ...[
-                Icon(icon, size: 14, color: FocusUi.muted),
+                Icon(icon, size: 14, color: FocusUi.muted(context)),
                 const SizedBox(width: 6),
               ],
               Expanded(
                 child: Text(
                   label.toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 9,
-                    color: FocusUi.muted,
+                    color: FocusUi.muted(context),
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.5,
                   ),
@@ -160,7 +174,7 @@ class FocusMetricChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: valueColor,
+              color: valueColor ?? FocusUi.inkSoft(context),
             ),
           ),
         ],

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:water_drink_app/core/session/app_session.dart';
+import 'package:water_drink_app/core/stats/system_stats_helper.dart';
 import 'package:water_drink_app/core/session/local_profile_store.dart';
 import 'package:water_drink_app/data/models/focus_system.dart';
 import 'package:water_drink_app/data/models/routine_task.dart';
@@ -78,6 +79,7 @@ class HomeController extends GetxController {
     if (Get.isRegistered<SystemsController>()) {
       Get.find<SystemsController>().selectSystem(systemId);
     }
+    refreshDerivedStats();
 
     if (!AppSession.canSync) return;
     try {
@@ -88,6 +90,29 @@ class HomeController extends GetxController {
     } catch (_) {
       Get.snackbar('Hydra', 'Active system saved on this device only');
     }
+  }
+
+  void refreshDerivedStats() {
+    scheduleMicrotask(_applyDerivedStatsNow);
+  }
+
+  void _applyDerivedStatsNow() {
+    if (!Get.isRegistered<SystemsController>()) return;
+    final systemsCtrl = Get.find<SystemsController>();
+    final systems = userSystems.isNotEmpty
+        ? userSystems
+        : systemsCtrl.availableSystems;
+    final snap = SystemStatsHelper.compute(
+      systems: systems,
+      tasks: systemsCtrl.tasks,
+      activeSystemId: activeHomeSystemId.value,
+    );
+    statsCompletionRate.value = snap.completionRate;
+    statsMonthlyDone.value = snap.monthlyDone;
+    statsMonthlyTotal.value = snap.monthlyTotal;
+    efficiencyRows.assignAll(snap.efficiency);
+    activeProgress.value = snap.activeProgress;
+    morningStepsRemaining.value = snap.activeRemaining;
   }
 
   Future<void> setReportScope(String scope) async {
@@ -186,6 +211,7 @@ class HomeController extends GetxController {
     userSystems.assignAll(local.systems);
     activeHomeSystemId.value = local.activeHomeSystemId.value;
     _syncActiveHomeSystem();
+    refreshDerivedStats();
   }
 
   FocusSystem? _firstSystemOfKind(String kind) {
@@ -212,6 +238,7 @@ class HomeController extends GetxController {
       (list) {
         userSystems.assignAll(list);
         _syncActiveHomeSystem();
+        refreshDerivedStats();
       },
       onError: (_) => _applyLocalSystems(),
     );
@@ -301,6 +328,7 @@ class HomeController extends GetxController {
       Get.find<LocalProfileStore>().setActiveHomeSystem(activeId);
     }
     _syncActiveHomeSystem();
+    refreshDerivedStats();
   }
 
   @override

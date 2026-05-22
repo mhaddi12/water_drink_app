@@ -9,6 +9,9 @@ import 'package:water_drink_app/core/ads/ad_units.dart';
 import 'package:water_drink_app/core/ads/app_open_ad_controller.dart';
 import 'package:water_drink_app/core/firebase/app_firebase.dart';
 import 'package:water_drink_app/core/network/connectivity_controller.dart';
+import 'package:water_drink_app/core/notifications/notification_coordinator.dart';
+import 'package:water_drink_app/core/push/onesignal_service.dart';
+import 'package:water_drink_app/core/reminders/reminder_notification_service.dart';
 import 'package:water_drink_app/core/session/local_profile_store.dart';
 import 'package:water_drink_app/data/repositories/user_repository.dart';
 import 'package:water_drink_app/data/services/auth_service.dart';
@@ -39,8 +42,13 @@ Future<void> main() async {
   if (AppFirebase.isReady) {
     Get.put(AuthService(), permanent: true);
     Get.put(UserRepository(), permanent: true);
+    await OneSignalService.instance.initialize();
+    OneSignalService.instance.bindAuth(Get.find<AuthService>());
+  } else if (OneSignalService.isSupported) {
+    await OneSignalService.instance.initialize();
   }
   Get.put(LocalProfileStore(), permanent: true);
+  Get.put(NotificationCoordinator(), permanent: true);
   Get.put(ConnectivityController(), permanent: true);
   Get.put(HomeController(), permanent: true);
   Get.put(SystemsController(), permanent: true);
@@ -48,6 +56,11 @@ Future<void> main() async {
   Get.put(HistoryController(), permanent: true);
   Get.put(RemindersController(), permanent: true);
   Get.put(SettingsController(), permanent: true);
+  await ReminderNotificationService.instance.initialize();
+  await NotificationCoordinator.instance.refreshStatus();
+  if (Get.find<LocalProfileStore>().reminderSlots.any((s) => s.enabled)) {
+    await NotificationCoordinator.instance.topUpScheduleFromLocal();
+  }
   FlutterNativeSplash.remove();
   runApp(const WaterDrinkApp());
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:water_drink_app/features/focus/controllers/home_controller.dart';
+import 'package:water_drink_app/features/focus/controllers/systems_controller.dart';
 import 'package:water_drink_app/features/focus/presentation/screens/full_report_screen.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_app_bar.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_ui.dart';
@@ -21,6 +22,12 @@ class StatsScreen extends StatelessWidget {
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               child: Obx(() {
+                if (Get.isRegistered<SystemsController>()) {
+                  final systems = Get.find<SystemsController>();
+                  systems.tasks.length;
+                  systems.tasks.where((task) => task.done).length;
+                }
+                controller.userSystems.length;
                 controller.weeklyHeights;
                 controller.weeklyHighlightIndex.value;
                 controller.statsStreakDays.value;

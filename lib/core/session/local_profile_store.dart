@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:water_drink_app/data/models/focus_system.dart';
 import 'package:water_drink_app/data/models/hydration_intake.dart';
+import 'package:water_drink_app/core/reminders/reminder_schedule_helper.dart';
 import 'package:water_drink_app/data/models/reminder_slot.dart';
 import 'package:water_drink_app/data/models/routine_task.dart';
 import 'package:water_drink_app/data/repositories/user_repository.dart';
@@ -13,7 +14,8 @@ class LocalProfileStore extends GetxService {
 
   final displayName = 'Hydra user'.obs;
   final hydrationGoalMl = 3000.obs;
-  final reminderFrequencyHours = 2.obs;
+  final reminderFrequencyHours =
+      ReminderScheduleHelper.reminderIntervalHours.obs;
   final theme = 'light'.obs;
   final activeHomeSystemId = RxnString();
 
@@ -28,9 +30,7 @@ class LocalProfileStore extends GetxService {
       tasks.assignAll(UserRepository.defaultTasks());
     }
     if (reminderSlots.isEmpty) {
-      reminderSlots.assignAll(
-        UserRepository.defaultReminderSlots().map(ReminderSlot.fromMap).toList(),
-      );
+      reminderSlots.assignAll(ReminderScheduleHelper.defaultStarterSlots());
     }
     if (systems.isEmpty) {
       systems.assignAll(_defaultSystems());
@@ -44,7 +44,8 @@ class LocalProfileStore extends GetxService {
     reminderSlots.clear();
     displayName.value = 'Hydra user';
     hydrationGoalMl.value = 3000;
-    reminderFrequencyHours.value = 2;
+    reminderFrequencyHours.value =
+        ReminderScheduleHelper.reminderIntervalHours;
     theme.value = 'light';
     activeHomeSystemId.value = null;
     seedDefaults();
@@ -100,10 +101,8 @@ class LocalProfileStore extends GetxService {
     tasks.refresh();
   }
 
-  void setReminderEnabled(String time, bool enabled) {
-    final index = reminderSlots.indexWhere((slot) => slot.time == time);
-    if (index < 0) return;
-    reminderSlots[index] = reminderSlots[index].copyWith(enabled: enabled);
+  void replaceReminderSlots(List<ReminderSlot> next) {
+    reminderSlots.assignAll(next);
     reminderSlots.refresh();
   }
 
@@ -116,13 +115,7 @@ class LocalProfileStore extends GetxService {
   }
 
   String nextReminderLabel() {
-    final enabled = reminderSlots
-        .where((slot) => slot.enabled)
-        .map((slot) => slot.time)
-        .where((time) => time.isNotEmpty)
-        .toList();
-    if (enabled.isEmpty) return 'No reminders enabled';
-    return 'Next reminder ${enabled.first}';
+    return ReminderScheduleHelper.nextLabel(reminderSlots);
   }
 
   static List<FocusSystem> _defaultSystems() {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:water_drink_app/app/widgets/hydra_app_drawer.dart';
 import 'package:water_drink_app/features/focus/controllers/focus_nav_controller.dart';
 import 'package:water_drink_app/features/focus/presentation/screens/focus_home_screen.dart';
 import 'package:water_drink_app/features/focus/presentation/screens/focus_sessions_screen.dart';
@@ -29,43 +30,16 @@ class FocusRootScreen extends GetView<FocusNavController> {
         final showBanner = _bannerTabIndexes.contains(selectedIndex);
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF1F2F7),
-          body: _pages[selectedIndex],
-          bottomNavigationBar: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                HydraBannerAd(visible: showBanner),
-                NavigationBar(
-                  selectedIndex: selectedIndex,
-                  onDestinationSelected: controller.setTab,
-                  destinations: const [
-                    NavigationDestination(
-                      icon: Icon(Icons.home_filled),
-                      label: 'HOME',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.grid_view_rounded),
-                      label: 'SYSTEMS',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.timer_outlined),
-                      label: 'FOCUS',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.assessment_outlined),
-                      label: 'STATS',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.water_drop_outlined),
-                      selectedIcon: Icon(Icons.water_drop),
-                      label: 'WATER',
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          drawer: const HydraAppDrawer(),
+          body: Column(
+            children: [
+              Expanded(child: _pages[selectedIndex]),
+              SafeArea(
+                top: false,
+                child: HydraBannerAd(visible: showBanner),
+              ),
+            ],
           ),
         );
       },

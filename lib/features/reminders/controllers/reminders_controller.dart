@@ -2,30 +2,50 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
+import 'package:water_drink_app/core/notifications/notification_coordinator.dart';
+import 'package:water_drink_app/core/reminders/reminder_schedule_helper.dart';
 import 'package:water_drink_app/core/session/app_session.dart';
 import 'package:water_drink_app/core/session/local_profile_store.dart';
 import 'package:water_drink_app/data/models/reminder_slot.dart';
 import 'package:water_drink_app/data/repositories/user_repository.dart';
 import 'package:water_drink_app/data/services/auth_service.dart';
+import 'package:water_drink_app/features/hydration/controllers/hydration_controller.dart';
 
 class RemindersController extends GetxController {
   final slots = <ReminderSlot>[].obs;
-  final reminderFrequencyHours = 2.obs;
 
   StreamSubscription<User?>? _authSub;
   StreamSubscription? _userSub;
 
+  NotificationCoordinator get _notifications => NotificationCoordinator.instance;
+
   LocalProfileStore get _local => Get.find<LocalProfileStore>();
+
+  static String get reminderIntervalLabel =>
+      ReminderScheduleHelper.intervalLabel;
+
+  bool get permissionGranted => _notifications.permissionGranted.value;
+  bool get pushOptedIn => _notifications.pushOptedIn.value;
+  String get statusSummary => _notifications.statusSummary.value;
+  String get nextAlarmLabel => _notifications.nextAlarmLabel.value;
+  bool get remindersEnabled => slots.any((slot) => slot.enabled);
+  int get enabledCount => remindersEnabled ? ReminderScheduleHelper.slotsPerDay : 0;
 
   @override
   void onInit() {
     super.onInit();
     _bind();
+    scheduleMicrotask(_notifications.refreshStatus);
   }
 
   void applyLocalDefaults() {
-    slots.assignAll(_local.reminderSlots);
-    reminderFrequencyHours.value = _local.reminderFrequencyHours.value;
+    final local = _local.reminderSlots;
+    slots.assignAll(
+      ReminderScheduleHelper.normalizeSlots(
+        local.isEmpty ? null : local.toList(),
+      ),
+    );
+    scheduleMicrotask(_applySchedule);
   }
 
   void _bind() {
@@ -59,56 +79,102 @@ class RemindersController extends GetxController {
       (snap) {
         final data = snap.data();
         if (data == null) return;
-        reminderFrequencyHours.value =
-            (data['reminderFrequencyHours'] as num?)?.toInt() ??
-            reminderFrequencyHours.value;
+
         final raw = data['reminderSlots'] as List?;
-        if (raw == null || raw.isEmpty) {
-          slots.assignAll(
-            UserRepository.defaultReminderSlots()
-                .map(ReminderSlot.fromMap)
-                .toList(),
-          );
-          return;
-        }
-        slots.assignAll(
-          raw
-              .map(
-                (entry) => ReminderSlot.fromMap(Map<String, dynamic>.from(entry)),
-              )
-              .toList()
-            ..sort((a, b) => a.order.compareTo(b.order)),
-        );
+        final parsed = raw == null || raw.isEmpty
+            ? null
+            : raw
+                .map(
+                  (entry) => ReminderSlot.fromMap(
+                    Map<String, dynamic>.from(entry),
+                  ),
+                )
+                .toList();
+        slots.assignAll(ReminderScheduleHelper.normalizeSlots(parsed));
+        _local.reminderSlots.assignAll(slots);
+        _syncHydrationReminderLabel();
+        unawaited(_applySchedule());
       },
       onError: (_) => applyLocalDefaults(),
     );
   }
 
-  Future<void> toggleSlot(String time, bool enabled) async {
-    final index = slots.indexWhere((slot) => slot.time == time);
-    if (index < 0) return;
-    slots[index] = slots[index].copyWith(enabled: enabled);
-    slots.refresh();
-    _local.setReminderEnabled(time, enabled);
-
-    if (!AppSession.canSync) {
-      return;
+  Future<void> setRemindersEnabled(bool enabled) async {
+    if (enabled && !permissionGranted) {
+      final granted = await _notifications.requestPermissions();
+      if (!granted) {
+        Get.snackbar('Hydra', 'Enable notifications to turn reminders on');
+        return;
+      }
     }
 
+    slots.assignAll(
+      ReminderScheduleHelper.slotsEveryThreeHours(enabled: enabled),
+    );
+    await persistSlots();
+    Get.snackbar(
+      'Hydra',
+      enabled
+          ? 'Reminders on · every $reminderIntervalLabel'
+          : 'Reminders turned off',
+    );
+  }
+
+  Future<void> persistSlots() async {
+    slots.assignAll(ReminderScheduleHelper.normalizeSlots(slots.toList()));
+    _local.reminderSlots.assignAll(slots);
+    _local.reminderFrequencyHours.value =
+        ReminderScheduleHelper.reminderIntervalHours;
+    _syncHydrationReminderLabel();
+    await _applySchedule();
+
+    if (!AppSession.canSync) return;
     try {
-      await Get.find<UserRepository>().setReminderEnabled(
+      await Get.find<UserRepository>().updateReminderSlots(
         AppSession.uid!,
-        time: time,
-        enabled: enabled,
+        slots,
       );
     } catch (_) {
       Get.snackbar('Hydra', 'Saved on this device only');
     }
   }
 
-  String get scheduleSummary {
-    final hours = reminderFrequencyHours.value;
-    return 'Reminder schedule active every $hours hours between 8 AM and 10 PM';
+  Future<void> requestPermissions() async {
+    final granted = await _notifications.requestPermissions();
+    if (granted) {
+      if (!remindersEnabled) {
+        await setRemindersEnabled(true);
+      } else {
+        await _applySchedule();
+      }
+      Get.snackbar(
+        'Hydra',
+        'Hydration reminders every $reminderIntervalLabel',
+      );
+    } else {
+      Get.snackbar(
+        'Hydra',
+        'Allow notifications and alarms in system settings',
+      );
+    }
+  }
+
+  Future<void> sendTestNotification() async {
+    await _notifications.showTestReminder();
+    if (ReminderScheduleHelper.useFastReminders && remindersEnabled) {
+      await _applySchedule();
+    }
+  }
+
+  Future<void> refreshNotificationStatus() => _notifications.refreshStatus();
+
+  Future<void> _applySchedule() async {
+    await _notifications.applySchedule(slots);
+  }
+
+  void _syncHydrationReminderLabel() {
+    if (!Get.isRegistered<HydrationController>()) return;
+    Get.find<HydrationController>().refreshReminderLabel(slots);
   }
 
   @override

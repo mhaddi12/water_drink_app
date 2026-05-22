@@ -178,7 +178,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   Widget build(BuildContext context) {
     final busy = _saving || _deleting;
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F2F7),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -219,7 +219,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                       TextFormField(
                         controller: _titleCtrl,
                         textCapitalization: TextCapitalization.sentences,
-                        decoration: focusInputDecoration('Title *'),
+                        decoration: focusInputDecoration(context,'Title *'),
                         validator: (v) {
                           final t = v?.trim() ?? '';
                           if (t.isEmpty) return 'Enter a title';
@@ -231,7 +231,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                       TextFormField(
                         controller: _subtitleCtrl,
                         textCapitalization: TextCapitalization.sentences,
-                        decoration: focusInputDecoration(
+                        decoration: focusInputDecoration(context,
                           'Detail',
                           hint: 'Time, amount, or note',
                         ),

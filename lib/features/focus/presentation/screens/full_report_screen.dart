@@ -159,14 +159,14 @@ class FullReportScreen extends StatelessWidget {
                                         .titleSmall
                                         ?.copyWith(
                                           fontWeight: FontWeight.w700,
-                                          color: FocusUi.inkSoft,
+                                          color: FocusUi.inkSoft(context),
                                         ),
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
                                     controller.statsQuote.value,
-                                    style: const TextStyle(
-                                      color: FocusUi.muted,
+                                    style: TextStyle(
+                                      color: FocusUi.muted(context),
                                       height: 1.4,
                                     ),
                                   ),
@@ -202,16 +202,23 @@ class _ReportChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = controller.statsReportScope.value == scope;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: () => controller.setReportScope(scope),
       borderRadius: BorderRadius.circular(999),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFE8F0FF) : Colors.white,
+          color: selected
+              ? (isDark
+                  ? const Color(0xFF1A2744)
+                  : const Color(0xFFE8F0FF))
+              : FocusUi.surface(context),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? const Color(0xFF4F74FF) : FocusUi.line,
+            color: selected
+                ? const Color(0xFF4F74FF)
+                : FocusUi.line(context),
           ),
         ),
         child: Text(
@@ -219,7 +226,11 @@ class _ReportChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: selected ? const Color(0xFF2E4CB2) : FocusUi.muted,
+            color: selected
+                ? (isDark
+                    ? const Color(0xFF9DB4FF)
+                    : const Color(0xFF2E4CB2))
+                : FocusUi.muted(context),
           ),
         ),
       ),

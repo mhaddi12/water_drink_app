@@ -134,7 +134,7 @@ class FocusHomeScreen extends StatelessWidget {
                             style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(
                                   fontWeight: FontWeight.w700,
-                                  color: FocusUi.ink,
+                                  color: FocusUi.ink(context),
                                 ),
                           ),
                           const SizedBox(height: 4),
@@ -382,8 +382,7 @@ class _SystemCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 24 / 1.6,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -392,12 +391,18 @@ class _SystemCard extends StatelessWidget {
             children: [
               Text(
                 subtitle,
-                style: const TextStyle(fontSize: 11, color: Color(0xFF687187)),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: FocusUi.muted(context),
+                ),
               ),
               const Spacer(),
               Text(
                 valueText,
-                style: const TextStyle(fontSize: 11, color: Color(0xFF4B5570)),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: FocusUi.muted(context),
+                ),
               ),
             ],
           ),
@@ -406,7 +411,7 @@ class _SystemCard extends StatelessWidget {
             value: progress,
             minHeight: 4,
             borderRadius: BorderRadius.circular(99),
-            backgroundColor: const Color(0xFFE4E8F2),
+            backgroundColor: FocusUi.line(context),
             valueColor: AlwaysStoppedAnimation<Color>(accentColor),
           ),
           const SizedBox(height: 8),
@@ -424,7 +429,10 @@ class _SystemCard extends StatelessWidget {
             children: [
               Text(
                 footerLeft,
-                style: const TextStyle(fontSize: 10, color: Color(0xFF8A92A8)),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: FocusUi.muted(context),
+                ),
               ),
               const SizedBox(width: 6),
               Expanded(

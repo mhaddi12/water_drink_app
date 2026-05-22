@@ -1,5 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:water_drink_app/app/widgets/hub_ui.dart';
+import 'package:water_drink_app/app/widgets/hydra_app_drawer.dart';
+import 'package:water_drink_app/core/notifications/notification_coordinator.dart';
+import 'package:water_drink_app/core/reminders/reminder_schedule_helper.dart';
 import 'package:water_drink_app/features/reminders/controllers/reminders_controller.dart';
 
 class RemindersScreen extends GetView<RemindersController> {
@@ -7,109 +12,175 @@ class RemindersScreen extends GetView<RemindersController> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return SafeArea(
-      child: Obx(() {
-        controller.slots;
-        controller.reminderFrequencyHours.value;
+    final interval = ReminderScheduleHelper.intervalLabel;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Reminders',
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      drawer: const HydraAppDrawer(),
+      body: SafeArea(
+        child: Obx(() {
+          controller.slots;
+          controller.remindersEnabled;
+          final coordinator = NotificationCoordinator.instance;
+          coordinator.permissionGranted.value;
+          coordinator.pushOptedIn.value;
+          coordinator.statusSummary.value;
+          coordinator.nextAlarmLabel.value;
+
+          final permission = coordinator.permissionGranted.value;
+          final notifications = coordinator.statusSummary.value;
+          final nextLabel = coordinator.nextAlarmLabel.value;
+          final enabled = controller.remindersEnabled;
+
+          return CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: HubPageHeader(
+                  title: 'Hydration reminders',
+                  subtitle: 'Notifications every $interval',
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Stay on track with smart alerts',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667185),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFFE3EBFF)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.notifications_active_outlined),
-                    const SizedBox(width: 12),
-                    Expanded(child: Text(controller.scheduleSummary)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              Expanded(
-                child: controller.slots.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Reminder slots will sync from your Firebase profile.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Color(0xFF667185)),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    if (!permission)
+                      HubCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.notifications_off_outlined,
+                                  color: Colors.orange.shade800,
+                                ),
+                                const SizedBox(width: 10),
+                                const Expanded(
+                                  child: Text(
+                                    'Notifications are off',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Enable alerts to get a reminder every $interval.',
+                              style: TextStyle(
+                                color: HubUi.mutedText(context),
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            FilledButton.icon(
+                              onPressed: controller.requestPermissions,
+                              icon: const Icon(Icons.notifications_active),
+                              label: const Text('Enable notifications'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: HubUi.primary,
+                                minimumSize: const Size.fromHeight(48),
+                              ),
+                            ),
+                          ],
                         ),
                       )
-                    : ListView(
-                        children: controller.slots
-                            .map(
-                              (slot) => _ReminderTile(
-                                time: slot.time,
-                                enabled: slot.enabled,
-                                onChanged: (enabled) =>
-                                    controller.toggleSlot(slot.time, enabled),
+                    else
+                      HubCard(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [HubUi.primary, HubUi.primaryLight],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.alarm_on_rounded,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    enabled ? 'Reminders on' : 'Reminders off',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              nextLabel,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                height: 1.35,
                               ),
-                            )
-                            .toList(),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              notifications,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                    const SizedBox(height: 16),
+                    HubCard(
+                      child: SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          interval,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        subtitle: Text(
+                          enabled
+                              ? (ReminderScheduleHelper.useFastReminders
+                                  ? 'Debug build · fires every 3 minutes'
+                                  : '${ReminderScheduleHelper.slotsPerDay} reminders per day')
+                              : 'Turn on to remind you throughout the day',
+                          style: TextStyle(color: HubUi.mutedText(context)),
+                        ),
+                        value: enabled && permission,
+                        activeTrackColor: HubUi.primary.withValues(alpha: 0.5),
+                        activeThumbColor: HubUi.primary,
+                        onChanged: permission
+                            ? controller.setRemindersEnabled
+                            : null,
+                      ),
+                    ),
+                    if (kDebugMode) ...[
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: controller.sendTestNotification,
+                          icon: const Icon(Icons.science_outlined, size: 18),
+                          label: const Text('Test notification (debug)'),
+                        ),
+                      ),
+                    ],
+                  ]),
+                ),
               ),
             ],
-          ),
-        );
-      }),
-    );
-  }
-}
-
-class _ReminderTile extends StatelessWidget {
-  const _ReminderTile({
-    required this.time,
-    required this.enabled,
-    required this.onChanged,
-  });
-
-  final String time;
-  final bool enabled;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.alarm_rounded, color: Color(0xFF4F74FF)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              time,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-            ),
-          ),
-          Switch(value: enabled, onChanged: onChanged),
-        ],
+          );
+        }),
       ),
     );
   }

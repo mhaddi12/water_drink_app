@@ -64,14 +64,14 @@ class SystemsScreen extends GetView<SystemsController> {
                               fontWeight: FontWeight.w600,
                               color: active
                                   ? Colors.white
-                                  : const Color(0xFF3F485F),
+                                  : FocusUi.muted(context),
                             ),
                             selectedColor: FocusUi.navy,
-                            backgroundColor: Colors.white,
+                            backgroundColor: FocusUi.surface(context),
                             side: BorderSide(
                               color: active
                                   ? FocusUi.navy
-                                  : const Color(0xFFE2E5EE),
+                                  : FocusUi.line(context),
                             ),
                           );
                         },
@@ -89,13 +89,13 @@ class SystemsScreen extends GetView<SystemsController> {
                                 style: Theme.of(context).textTheme.titleSmall
                                     ?.copyWith(
                                       fontWeight: FontWeight.w700,
-                                      color: FocusUi.inkSoft,
+                                      color: FocusUi.inkSoft(context),
                                     ),
                               ),
                               const Spacer(),
                               Text(
                                 '${(pct * 100).round()}%',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: FocusUi.accent,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 13,
@@ -109,7 +109,7 @@ class SystemsScreen extends GetView<SystemsController> {
                             child: LinearProgressIndicator(
                               value: pct.clamp(0.0, 1.0),
                               minHeight: 6,
-                              backgroundColor: const Color(0xFFE2DFEA),
+                              backgroundColor: FocusUi.line(context),
                               valueColor: const AlwaysStoppedAnimation<Color>(
                                 FocusUi.accentMint,
                               ),
@@ -148,9 +148,9 @@ class SystemsScreen extends GetView<SystemsController> {
                       FocusSurface(
                         child: Text(
                           'No steps yet for ${selected?.name ?? 'this system'}. Add the tasks you want to complete.',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF7A8299),
+                            color: FocusUi.muted(context),
                           ),
                         ),
                       ),
@@ -326,7 +326,7 @@ class _TaskTile extends StatelessWidget {
           IconButton(
             onPressed: onEdit,
             icon: const Icon(Icons.edit_outlined, size: 18),
-            color: FocusUi.inkSoft,
+            color: FocusUi.inkSoft(context),
             tooltip: 'Edit',
             splashRadius: 20,
           ),

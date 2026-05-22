@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:water_drink_app/app/widgets/hydra_app_drawer.dart';
 import 'package:water_drink_app/features/history/presentation/screens/history_screen.dart';
 import 'package:water_drink_app/features/hydration/controllers/hydration_controller.dart';
 import 'package:water_drink_app/features/hydration/presentation/widgets/hydration_progress_card.dart';
@@ -31,6 +32,11 @@ class HydrationHomeScreen extends GetView<HydrationController> {
             children: [
               Row(
                 children: [
+                  IconButton(
+                    onPressed: () => openHydraDrawer(context),
+                    icon: const Icon(Icons.menu_rounded),
+                    tooltip: 'Menu',
+                  ),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,7 +44,7 @@ class HydrationHomeScreen extends GetView<HydrationController> {
                         Text(
                           controller.greeting(),
                           style: textTheme.titleMedium?.copyWith(
-                            color: const Color(0xFF667185),
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -116,9 +122,11 @@ class HydrationHomeScreen extends GetView<HydrationController> {
               ),
               const SizedBox(height: 10),
               if (controller.todayIntakes.isEmpty)
-                const Text(
+                Text(
                   'No intake logged yet. Add water to sync today\'s timeline.',
-                  style: TextStyle(color: Color(0xFF667185)),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 )
               else
                 ...controller.todayIntakes.map(

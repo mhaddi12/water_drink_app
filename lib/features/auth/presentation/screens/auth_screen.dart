@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:water_drink_app/core/firebase/app_firebase.dart';
 import 'package:water_drink_app/core/session/app_session.dart';
 import 'package:water_drink_app/data/services/auth_service.dart';
+import 'package:water_drink_app/app/theme/hydra_theme_colors.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_input_decoration.dart';
 
 /// Email / password sign-in and registration, with optional guest access.
@@ -133,8 +134,10 @@ class _AuthScreenState extends State<AuthScreen>
       );
     }
 
+    final colors = HydraThemeColors.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F2F7),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(22, 28, 22, 32),
@@ -143,10 +146,10 @@ class _AuthScreenState extends State<AuthScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(
+                Icon(
                   Icons.water_drop_rounded,
                   size: 48,
-                  color: Color(0xFF082F86),
+                  color: Theme.of(context).colorScheme.primary,
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -154,22 +157,22 @@ class _AuthScreenState extends State<AuthScreen>
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF143064),
+                        color: colors.ink,
                       ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Sign in to sync routines, systems, and focus across devices.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF7A8299),
+                    color: colors.muted,
                     height: 1.35,
                   ),
                 ),
                 const SizedBox(height: 28),
                 Material(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
                     padding: const EdgeInsets.all(14),
@@ -202,7 +205,7 @@ class _AuthScreenState extends State<AuthScreen>
                             AutofillHints.email,
                           ],
                           textInputAction: TextInputAction.next,
-                          decoration: focusInputDecoration('Email'),
+                          decoration: focusInputDecoration(context,'Email'),
                           validator: (v) {
                             final t = v?.trim() ?? '';
                             if (t.isEmpty) return 'Enter your email';
@@ -223,7 +226,7 @@ class _AuthScreenState extends State<AuthScreen>
                               _submitRegister();
                             }
                           },
-                          decoration: focusInputDecoration('Password').copyWith(
+                          decoration: focusInputDecoration(context,'Password').copyWith(
                             suffixIcon: IconButton(
                               tooltip: _obscure ? 'Show' : 'Hide',
                               onPressed: () =>

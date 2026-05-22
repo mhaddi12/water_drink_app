@@ -4,7 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:water_drink_app/core/session/app_session.dart';
 import 'package:water_drink_app/core/session/local_profile_store.dart';
+import 'package:water_drink_app/core/reminders/reminder_schedule_helper.dart';
 import 'package:water_drink_app/data/models/hydration_intake.dart';
+import 'package:water_drink_app/data/models/reminder_slot.dart';
 import 'package:water_drink_app/data/repositories/user_repository.dart';
 import 'package:water_drink_app/data/services/auth_service.dart';
 
@@ -71,6 +73,7 @@ class HydrationController extends GetxController {
         goalMl.value = (data['hydrationGoalMl'] as num?)?.toInt() ?? goalMl.value;
         displayName.value = data['displayName'] as String? ?? displayName.value;
         nextReminderText.value = _nextReminderLabel(data['reminderSlots'] as List?);
+        _syncLocalReminderSlots(data['reminderSlots'] as List?);
       },
       onError: (_) => applyLocalDefaults(),
     );
@@ -117,17 +120,28 @@ class HydrationController extends GetxController {
     return 'Good evening';
   }
 
+  void refreshReminderLabel(List<ReminderSlot> slots) {
+    nextReminderText.value = ReminderScheduleHelper.nextLabel(slots);
+  }
+
+  void _syncLocalReminderSlots(List<dynamic>? raw) {
+    final parsed = raw == null || raw.isEmpty
+        ? null
+        : raw
+            .map((entry) => ReminderSlot.fromMap(Map<String, dynamic>.from(entry)))
+            .toList();
+    _local.reminderSlots.assignAll(ReminderScheduleHelper.normalizeSlots(parsed));
+  }
+
   static String _nextReminderLabel(List<dynamic>? raw) {
-    final slots = raw == null
-        ? UserRepository.defaultReminderSlots()
-        : raw.map((entry) => Map<String, dynamic>.from(entry)).toList();
-    final enabled = slots
-        .where((slot) => slot['enabled'] == true)
-        .map((slot) => slot['time'] as String? ?? '')
-        .where((time) => time.isNotEmpty)
-        .toList();
-    if (enabled.isEmpty) return 'No reminders enabled';
-    return 'Next reminder ${enabled.first}';
+    final parsed = raw == null || raw.isEmpty
+        ? null
+        : raw
+            .map((entry) => ReminderSlot.fromMap(Map<String, dynamic>.from(entry)))
+            .toList();
+    return ReminderScheduleHelper.nextLabel(
+      ReminderScheduleHelper.normalizeSlots(parsed),
+    );
   }
 
   @override

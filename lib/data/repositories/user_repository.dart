@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import 'package:water_drink_app/core/firebase/app_firebase.dart';
+import 'package:water_drink_app/core/reminders/reminder_schedule_helper.dart';
+import 'package:water_drink_app/core/stats/system_stats_helper.dart';
 import 'package:water_drink_app/data/models/focus_system.dart';
 import 'package:water_drink_app/data/models/hydration_intake.dart';
 import 'package:water_drink_app/data/models/reminder_slot.dart';
@@ -84,7 +86,7 @@ class UserRepository extends GetxService {
     'routineFrequency': 'Daily',
     'displayName': 'Hydra user',
     'hydrationGoalMl': 3000,
-    'reminderFrequencyHours': 2,
+    'reminderFrequencyHours': ReminderScheduleHelper.reminderIntervalHours,
     'theme': 'light',
     'activeHomeSystemId': null,
     'hydrationWeeklyAverageMl': 0,
@@ -148,14 +150,10 @@ class UserRepository extends GetxService {
     },
   ];
 
-  static List<Map<String, dynamic>> defaultReminderSlots() => const [
-    {'time': '8:00 AM', 'enabled': true, 'order': 0},
-    {'time': '10:00 AM', 'enabled': true, 'order': 1},
-    {'time': '12:00 PM', 'enabled': true, 'order': 2},
-    {'time': '2:00 PM', 'enabled': false, 'order': 3},
-    {'time': '4:00 PM', 'enabled': true, 'order': 4},
-    {'time': '6:00 PM', 'enabled': true, 'order': 5},
-  ];
+  static List<Map<String, dynamic>> defaultReminderSlots() =>
+      ReminderScheduleHelper.defaultStarterSlots()
+          .map((slot) => slot.toMap())
+          .toList();
 
   Future<void> ensureSeed(String uid) async {
     if (!AppFirebase.isReady) return;
@@ -277,14 +275,10 @@ class UserRepository extends GetxService {
     await tasksRef(uid).doc(taskId).delete();
   }
 
-  Future<void> syncMorningProgress(
-    String uid,
-    double progress,
-    int remaining,
-  ) async {
+  Future<void> syncDerivedStats(String uid, SystemStatsSnapshot snap) async {
     if (!AppFirebase.isReady) return;
-    final snap = await userRef(uid).get();
-    final data = snap.data() ?? {};
+    final doc = await userRef(uid).get();
+    final data = doc.data() ?? {};
     final raw = data['weeklyHeights'] as List?;
     final heights = <double>[];
     if (raw != null && raw.length == 7) {
@@ -293,12 +287,15 @@ class UserRepository extends GetxService {
       heights.addAll(List<double>.filled(7, 0.0));
     }
     final idx = DateTime.now().weekday - 1;
-    final p = progress.clamp(0.0, 1.0);
-    heights[idx] = math.max(heights[idx], p);
+    final progress = snap.activeProgress.clamp(0.0, 1.0);
+    heights[idx] = math.max(heights[idx], progress);
     await mergeUser(uid, {
-      'activeProgress': p,
-      'morningStepsRemaining': remaining,
-      'statsCompletionRate': p,
+      'activeProgress': progress,
+      'morningStepsRemaining': snap.activeRemaining,
+      'statsCompletionRate': snap.completionRate,
+      'statsMonthlyDone': snap.monthlyDone,
+      'statsMonthlyTotal': snap.monthlyTotal,
+      'efficiency': snap.efficiency.map((row) => row.toMap()).toList(),
       'weeklyHeights': heights,
       'weeklyHighlightIndex': idx,
     });
@@ -365,23 +362,14 @@ class UserRepository extends GetxService {
     await _refreshHydrationInsights(uid);
   }
 
-  Future<void> setReminderEnabled(
-    String uid, {
-    required String time,
-    required bool enabled,
-  }) async {
+  Future<void> updateReminderSlots(
+    String uid,
+    List<ReminderSlot> slots,
+  ) async {
     if (!AppFirebase.isReady) return;
-    final snap = await userRef(uid).get();
-    final data = snap.data() ?? {};
-    final raw = data['reminderSlots'] as List?;
-    final slots = _parseReminderSlots(raw);
-    final next = slots
-        .map(
-          (slot) => slot.time == time ? slot.copyWith(enabled: enabled) : slot,
-        )
-        .toList();
+    final sorted = ReminderScheduleHelper.sortByTime(slots);
     await mergeUser(uid, {
-      'reminderSlots': next.map((slot) => slot.toMap()).toList(),
+      'reminderSlots': sorted.map((slot) => slot.toMap()).toList(),
     });
   }
 
@@ -401,7 +389,8 @@ class UserRepository extends GetxService {
       updates['hydrationGoalMl'] = hydrationGoalMl.clamp(250, 10000);
     }
     if (reminderFrequencyHours != null) {
-      updates['reminderFrequencyHours'] = reminderFrequencyHours.clamp(1, 12);
+      updates['reminderFrequencyHours'] =
+          reminderFrequencyHours.clamp(1, 12);
     }
     if (theme != null) {
       updates['theme'] = theme;
@@ -472,16 +461,6 @@ class UserRepository extends GetxService {
       'hydrationBestDayMl': bestDayMl,
       'hydrationBestDayLabel': bestDayLabel,
     });
-  }
-
-  static List<ReminderSlot> _parseReminderSlots(List<dynamic>? raw) {
-    if (raw == null || raw.isEmpty) {
-      return defaultReminderSlots().map(ReminderSlot.fromMap).toList();
-    }
-    return raw
-        .map((entry) => ReminderSlot.fromMap(Map<String, dynamic>.from(entry)))
-        .toList()
-      ..sort((a, b) => a.order.compareTo(b.order));
   }
 
   static String _dayLabel(DateTime day, DateTime now) {

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:water_drink_app/app/app.dart';
@@ -32,7 +33,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Build your system'), findsOneWidget);
-    expect(find.text('HOME'), findsOneWidget);
-    expect(find.text('WATER'), findsOneWidget);
+    expect(find.byTooltip('Menu'), findsWidgets);
+    expect(find.byType(NavigationBar), findsNothing);
   });
 }

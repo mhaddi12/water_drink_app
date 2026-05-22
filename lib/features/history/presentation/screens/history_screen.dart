@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:water_drink_app/app/widgets/hub_ui.dart';
+import 'package:water_drink_app/app/widgets/hydra_app_drawer.dart';
 import 'package:water_drink_app/features/history/controllers/history_controller.dart';
 
 class HistoryScreen extends GetView<HistoryController> {
@@ -7,131 +9,76 @@ class HistoryScreen extends GetView<HistoryController> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return SafeArea(
-      child: Obx(() {
-        controller.weeklyAverageMl.value;
-        controller.weeklyDeltaPct.value;
-        controller.bestDayMl.value;
-        controller.bestDayLabel.value;
-        controller.daySummaries;
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      drawer: const HydraAppDrawer(),
+      body: SafeArea(
+        child: Obx(() {
+          controller.weeklyAverageMl.value;
+          controller.weeklyDeltaPct.value;
+          controller.bestDayMl.value;
+          controller.bestDayLabel.value;
+          controller.daySummaries;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'History',
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
+          return CustomScrollView(
+            slivers: [
+              const SliverToBoxAdapter(
+                child: HubPageHeader(
+                  title: 'History',
+                  subtitle: 'Your hydration consistency over time',
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Track your hydration consistency',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF667185),
-                ),
-              ),
-              const SizedBox(height: 20),
-              _SummaryCard(
-                title: 'Weekly Average',
-                value: controller.weeklyAverageLabel,
-                subtitle: controller.weeklyDeltaLabel,
-                icon: Icons.trending_up_rounded,
-              ),
-              const SizedBox(height: 12),
-              _SummaryCard(
-                title: 'Best Day',
-                value: controller.bestDayValueLabel,
-                subtitle: controller.bestDayLabel.value,
-                icon: Icons.emoji_events_outlined,
-              ),
-              const SizedBox(height: 18),
-              Expanded(
-                child: controller.daySummaries.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Your hydration history will appear here after you log water.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Color(0xFF667185)),
-                        ),
-                      )
-                    : ListView(
-                        children: controller.daySummaries
-                            .map(
-                              (summary) => _DayHistoryTile(
-                                day: summary.label,
-                                intakeMl: summary.intakeMl,
-                                goalMl: summary.goalMl,
-                              ),
-                            )
-                            .toList(),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: HubStatCard(
+                              title: 'Weekly avg',
+                              value: controller.weeklyAverageLabel,
+                              subtitle: controller.weeklyDeltaLabel,
+                              icon: Icons.trending_up_rounded,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: HubStatCard(
+                              title: 'Best day',
+                              value: controller.bestDayValueLabel,
+                              subtitle: controller.bestDayLabel.value,
+                              icon: Icons.emoji_events_outlined,
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(height: 18),
+                    const HubSectionLabel('Daily log'),
+                    if (controller.daySummaries.isEmpty)
+                      const HubEmptyState(
+                        icon: Icons.water_drop_outlined,
+                        message:
+                            'Your hydration history will appear here after you log water on the Water tab.',
+                      )
+                    else
+                      ...controller.daySummaries.map(
+                        (summary) => _DayHistoryTile(
+                          day: summary.label,
+                          intakeMl: summary.intakeMl,
+                          goalMl: summary.goalMl,
+                        ),
+                      ),
+                    const SizedBox(height: 24),
+                  ]),
+                ),
               ),
             ],
-          ),
-        );
-      }),
-    );
-  }
-}
-
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
-    required this.title,
-    required this.value,
-    required this.subtitle,
-    required this.icon,
-  });
-
-  final String title;
-  final String value;
-  final String subtitle;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE3EBFF)),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: const Color(0xFFE8F0FF),
-            child: Icon(icon, color: const Color(0xFF4F74FF)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF667185),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(subtitle, style: const TextStyle(fontSize: 12)),
-              ],
-            ),
-          ),
-        ],
+          );
+        }),
       ),
     );
   }
@@ -153,30 +100,74 @@ class _DayHistoryTile extends StatelessWidget {
     final progress = goalMl <= 0
         ? 0.0
         : (intakeMl / goalMl).clamp(0, 1).toDouble();
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(day, style: const TextStyle(fontWeight: FontWeight.w700)),
-              const Spacer(),
-              Text('$intakeMl / $goalMl ml'),
-            ],
-          ),
-          const SizedBox(height: 10),
-          LinearProgressIndicator(
-            value: progress,
-            minHeight: 8,
-            borderRadius: BorderRadius.circular(99),
-          ),
-        ],
+    final hitGoal = progress >= 1.0;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: HubCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    day,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                if (hitGoal)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF22C55E).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Goal met',
+                      style: TextStyle(
+                        color: Color(0xFF16A34A),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                const SizedBox(width: 8),
+                Text(
+                  '$intakeMl ml',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: HubUi.mutedText(context),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Goal $goalMl ml · ${(progress * 100).round()}%',
+              style: TextStyle(
+                fontSize: 12,
+                color: HubUi.mutedText(context),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(99),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 8,
+                backgroundColor: HubUi.primary.withValues(alpha: 0.12),
+                color: HubUi.primary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
