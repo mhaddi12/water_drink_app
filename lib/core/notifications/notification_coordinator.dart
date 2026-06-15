@@ -1,23 +1,23 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:water_drink_app/core/session/local_profile_store.dart';
 import 'package:water_drink_app/core/push/onesignal_service.dart';
+import 'package:water_drink_app/core/push/push_token_firestore_sync.dart';
 import 'package:water_drink_app/core/reminders/reminder_notification_service.dart';
 import 'package:water_drink_app/core/reminders/reminder_schedule_helper.dart';
 import 'package:water_drink_app/data/models/reminder_slot.dart';
 import 'package:water_drink_app/features/focus/controllers/focus_nav_controller.dart';
 
-/// Coordinates local scheduled reminders and OneSignal push subscription state.
+/// Push notifications (OneSignal + your backend). No local 3h/3min schedules.
 class NotificationCoordinator extends GetxService with WidgetsBindingObserver {
   final permissionGranted = false.obs;
   final pushOptedIn = false.obs;
   final pushSubscriptionId = RxnString();
-  final localRemindersActive = 0.obs;
+  final pushRemindersEnabled = false.obs;
   final statusSummary = 'Checking notifications…'.obs;
-  final nextAlarmLabel = 'No reminders set'.obs;
+  final nextAlarmLabel = 'Reminders off'.obs;
 
   static NotificationCoordinator get instance {
     if (!Get.isRegistered<NotificationCoordinator>()) {
@@ -30,10 +30,7 @@ class NotificationCoordinator extends GetxService with WidgetsBindingObserver {
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
-    scheduleMicrotask(() async {
-      await refreshStatus();
-      await topUpScheduleFromLocal();
-    });
+    scheduleMicrotask(refreshStatus);
   }
 
   @override
@@ -45,16 +42,8 @@ class NotificationCoordinator extends GetxService with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      unawaited(topUpScheduleFromLocal());
+      unawaited(refreshStatus());
     }
-  }
-
-  /// Re-applies the local reminder schedule (needed for 3‑minute test alarms).
-  Future<void> topUpScheduleFromLocal() async {
-    if (!Get.isRegistered<LocalProfileStore>()) return;
-    final slots = Get.find<LocalProfileStore>().reminderSlots.toList();
-    if (!slots.any((slot) => slot.enabled)) return;
-    await applySchedule(slots);
   }
 
   Future<void> refreshStatus() async {
@@ -75,6 +64,14 @@ class NotificationCoordinator extends GetxService with WidgetsBindingObserver {
       pushSubscriptionId.value = null;
     }
 
+    if (Get.isRegistered<LocalProfileStore>()) {
+      final enabled = Get.find<LocalProfileStore>()
+          .reminderSlots
+          .any((slot) => slot.enabled);
+      pushRemindersEnabled.value = enabled;
+      updateNextAlarmLabel(Get.find<LocalProfileStore>().reminderSlots.toList());
+    }
+
     _updateSummary();
   }
 
@@ -83,49 +80,45 @@ class NotificationCoordinator extends GetxService with WidgetsBindingObserver {
   }
 
   void _updateSummary() {
-    final local = localRemindersActive.value;
     if (!permissionGranted.value) {
-      statusSummary.value = 'Tap Enable below to turn on hydration alarms';
+      statusSummary.value = 'Allow notifications to receive hydration alerts';
       return;
     }
-    if (local == 0) {
-      statusSummary.value =
-          'Reminders off · turn on for ${ReminderScheduleHelper.intervalLabel}';
+    if (!pushRemindersEnabled.value) {
+      statusSummary.value = 'Reminders off · turn on to register for push';
       return;
     }
-    final push = pushOptedIn.value ? 'Push on' : 'Push optional';
-    final interval = ReminderScheduleHelper.intervalLabel;
-    statusSummary.value = 'Every $interval · $push';
+    final push = pushOptedIn.value ? 'Device registered' : 'Enable push in settings';
+    statusSummary.value = 'Push reminders on · $push';
   }
 
   Future<void> applySchedule(List<ReminderSlot> slots) async {
     final sorted = ReminderScheduleHelper.sortByTime(slots);
     final enabled = sorted.any((slot) => slot.enabled);
-    localRemindersActive.value = enabled
-        ? (ReminderScheduleHelper.useFastReminders
-            ? ReminderScheduleHelper.debugPendingNotifications
-            : sorted.where((slot) => slot.enabled).length)
-        : 0;
+    pushRemindersEnabled.value = enabled;
     updateNextAlarmLabel(sorted);
-    final scheduled = await ReminderNotificationService.instance.reschedule(sorted);
-    if (kDebugMode && enabled && scheduled == 0) {
-      debugPrint('Hydra: no notifications were scheduled — check permissions');
-    }
+
+    await ReminderNotificationService.instance.reschedule(sorted);
+
     await OneSignalService.instance.syncReminderPreferences(
-      reminderCount: sorted.length,
-      enabledCount: localRemindersActive.value,
+      reminderCount: 1,
+      enabledCount: enabled ? 1 : 0,
     );
+
+    if (enabled) {
+      await PushTokenFirestoreSync.instance.ensureSynced();
+    }
+
     await refreshStatus();
   }
 
   Future<bool> requestPermissions() async {
     await ReminderNotificationService.instance.initialize();
-    var granted = await ReminderNotificationService.instance.requestPermission(
-      requestExactAlarms: true,
-    );
+    var granted = await ReminderNotificationService.instance.requestPermission();
 
     if (OneSignalService.isSupported) {
       await OneSignalService.instance.requestPushPermission();
+      await PushTokenFirestoreSync.instance.ensureSynced();
       await refreshStatus();
       granted = granted || permissionGranted.value;
     } else {
@@ -136,18 +129,17 @@ class NotificationCoordinator extends GetxService with WidgetsBindingObserver {
   }
 
   Future<void> showTestReminder() async {
-    if (!ReminderScheduleHelper.useFastReminders) return;
     final shown = await ReminderNotificationService.instance.showTestNotification();
     if (!shown) {
       Get.snackbar('Hydra', 'Could not show test notification');
       return;
     }
-    Get.snackbar('Hydra', 'Test alarm sent');
+    Get.snackbar('Hydra', 'Test notification sent');
   }
 
   static void handleNotificationOpen() {
     if (Get.isRegistered<FocusNavController>()) {
-      Get.find<FocusNavController>().setTab(4);
+      Get.find<FocusNavController>().goWater();
     }
   }
 }

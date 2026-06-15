@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:water_drink_app/app/widgets/hub_ui.dart';
-import 'package:water_drink_app/app/widgets/hydra_app_drawer.dart';
 import 'package:water_drink_app/features/history/controllers/history_controller.dart';
 
 class HistoryScreen extends GetView<HistoryController> {
@@ -11,7 +10,9 @@ class HistoryScreen extends GetView<HistoryController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      drawer: const HydraAppDrawer(),
+      appBar: AppBar(
+        title: const Text('History'),
+      ),
       body: SafeArea(
         child: Obx(() {
           controller.weeklyAverageMl.value;
@@ -22,10 +23,16 @@ class HistoryScreen extends GetView<HistoryController> {
 
           return CustomScrollView(
             slivers: [
-              const SliverToBoxAdapter(
-                child: HubPageHeader(
-                  title: 'History',
-                  subtitle: 'Your hydration consistency over time',
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                  child: Text(
+                    'Your hydration consistency over time',
+                    style: TextStyle(
+                      color: HubUi.mutedText(context),
+                      height: 1.4,
+                    ),
+                  ),
                 ),
               ),
               SliverPadding(

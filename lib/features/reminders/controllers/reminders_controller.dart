@@ -21,15 +21,11 @@ class RemindersController extends GetxController {
 
   LocalProfileStore get _local => Get.find<LocalProfileStore>();
 
-  static String get reminderIntervalLabel =>
-      ReminderScheduleHelper.intervalLabel;
-
   bool get permissionGranted => _notifications.permissionGranted.value;
   bool get pushOptedIn => _notifications.pushOptedIn.value;
   String get statusSummary => _notifications.statusSummary.value;
   String get nextAlarmLabel => _notifications.nextAlarmLabel.value;
   bool get remindersEnabled => slots.any((slot) => slot.enabled);
-  int get enabledCount => remindersEnabled ? ReminderScheduleHelper.slotsPerDay : 0;
 
   @override
   void onInit() {
@@ -108,23 +104,19 @@ class RemindersController extends GetxController {
       }
     }
 
-    slots.assignAll(
-      ReminderScheduleHelper.slotsEveryThreeHours(enabled: enabled),
-    );
+    slots.assignAll(ReminderScheduleHelper.pushPreference(enabled: enabled));
     await persistSlots();
     Get.snackbar(
       'Hydra',
       enabled
-          ? 'Reminders on · every $reminderIntervalLabel'
-          : 'Reminders turned off',
+          ? 'Push reminders on · your server controls timing'
+          : 'Push reminders turned off',
     );
   }
 
   Future<void> persistSlots() async {
     slots.assignAll(ReminderScheduleHelper.normalizeSlots(slots.toList()));
     _local.reminderSlots.assignAll(slots);
-    _local.reminderFrequencyHours.value =
-        ReminderScheduleHelper.reminderIntervalHours;
     _syncHydrationReminderLabel();
     await _applySchedule();
 
@@ -147,23 +139,17 @@ class RemindersController extends GetxController {
       } else {
         await _applySchedule();
       }
-      Get.snackbar(
-        'Hydra',
-        'Hydration reminders every $reminderIntervalLabel',
-      );
+      Get.snackbar('Hydra', 'Ready for push reminders from your server');
     } else {
       Get.snackbar(
         'Hydra',
-        'Allow notifications and alarms in system settings',
+        'Allow notifications in system settings',
       );
     }
   }
 
   Future<void> sendTestNotification() async {
     await _notifications.showTestReminder();
-    if (ReminderScheduleHelper.useFastReminders && remindersEnabled) {
-      await _applySchedule();
-    }
   }
 
   Future<void> refreshNotificationStatus() => _notifications.refreshStatus();

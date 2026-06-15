@@ -203,10 +203,12 @@ class _ReportChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final selected = controller.statsReportScope.value == scope;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return InkWell(
-      onTap: () => controller.setReportScope(scope),
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => controller.setReportScope(scope),
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: selected
@@ -233,6 +235,7 @@ class _ReportChip extends StatelessWidget {
                 : FocusUi.muted(context),
           ),
         ),
+      ),
       ),
     );
   }

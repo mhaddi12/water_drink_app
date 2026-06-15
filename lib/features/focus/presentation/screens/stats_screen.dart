@@ -13,13 +13,15 @@ class StatsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<HomeController>();
-    return SafeArea(
-      bottom: false,
-      child: Column(
-        children: [
-          const FocusAppBar(),
-          Expanded(
-            child: SingleChildScrollView(
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            const FocusAppBar(),
+            Expanded(
+              child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               child: Obx(() {
                 if (Get.isRegistered<SystemsController>()) {
@@ -76,9 +78,10 @@ class StatsScreen extends StatelessWidget {
                   ],
                 );
               }),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

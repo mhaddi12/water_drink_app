@@ -25,4 +25,18 @@ abstract final class ReminderTimezone {
       }
     }
   }
+
+  /// Device IANA timezone (fresh read — use before syncing to Firestore).
+  static Future<String> readDeviceTimezoneId() async {
+    try {
+      final timeZone = await FlutterTimezone.getLocalTimezone();
+      final id = timeZone.identifier.trim();
+      if (id.isNotEmpty) return id;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Hydra timezone read failed: $e');
+      }
+    }
+    return 'UTC';
+  }
 }

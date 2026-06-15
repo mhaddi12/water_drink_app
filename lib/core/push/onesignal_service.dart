@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:water_drink_app/core/notifications/notification_coordinator.dart';
+import 'package:water_drink_app/core/push/push_token_firestore_sync.dart';
 import 'package:water_drink_app/data/services/auth_service.dart';
 
 /// OneSignal App ID — Settings → Keys & IDs in the OneSignal dashboard.
@@ -38,6 +39,7 @@ class OneSignalService {
       }
 
       OneSignal.initialize(kOneSignalAppId);
+      await OneSignal.InAppMessages.paused(true);
 
       OneSignal.Notifications.addClickListener((_) {
         NotificationCoordinator.handleNotificationOpen();
@@ -45,6 +47,7 @@ class OneSignalService {
 
       await requestPushPermission();
       _initialized = true;
+      unawaited(PushTokenFirestoreSync.instance.ensureSynced());
 
       if (kDebugMode) {
         debugPrint('OneSignal push subscription id: $subscriptionId');
@@ -61,6 +64,7 @@ class OneSignalService {
     if (!isSupported) return;
     try {
       await OneSignal.Notifications.requestPermission(true);
+      unawaited(PushTokenFirestoreSync.instance.ensureSynced());
     } catch (e) {
       if (kDebugMode) {
         debugPrint('OneSignal permission request failed: $e');
@@ -102,6 +106,7 @@ class OneSignalService {
         return;
       }
       OneSignal.login(user.uid);
+      unawaited(PushTokenFirestoreSync.instance.ensureSynced());
       if (kDebugMode) {
         debugPrint('OneSignal login external id: ${user.uid}');
       }

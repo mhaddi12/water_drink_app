@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:water_drink_app/core/firebase/app_firebase.dart';
-import 'package:water_drink_app/core/reminders/reminder_schedule_helper.dart';
 import 'package:water_drink_app/core/session/app_session.dart';
 import 'package:water_drink_app/core/session/local_profile_store.dart';
 import 'package:water_drink_app/core/session/sign_out_helper.dart';
@@ -17,8 +16,7 @@ import 'package:water_drink_app/features/hydration/controllers/hydration_control
 class SettingsController extends GetxController {
   final displayName = 'Hydra user'.obs;
   final hydrationGoalMl = 3000.obs;
-  final reminderFrequencyHours =
-      ReminderScheduleHelper.reminderIntervalHours.obs;
+  final reminderFrequencyHours = 0.obs;
   final theme = 'light'.obs;
   final appVersionLabel = '1.0.0'.obs;
   final accountHint = 'Not signed in'.obs;

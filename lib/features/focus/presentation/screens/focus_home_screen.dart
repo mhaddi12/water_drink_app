@@ -5,6 +5,7 @@ import 'package:water_drink_app/features/focus/controllers/focus_nav_controller.
 import 'package:water_drink_app/features/focus/controllers/home_controller.dart';
 import 'package:water_drink_app/features/focus/controllers/systems_controller.dart';
 import 'package:water_drink_app/features/focus/presentation/screens/create_system_screen.dart';
+import 'package:water_drink_app/features/focus/presentation/screens/focus_sessions_screen.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_app_bar.dart';
 import 'package:water_drink_app/features/focus/presentation/widgets/focus_ui.dart';
 
@@ -91,9 +92,7 @@ class FocusHomeScreen extends StatelessWidget {
                         footerLeft: controller.phaseLabel.value,
                         footerText: 'Open focus',
                         accentColor: const Color(0xFF234EB8),
-                        onResume: Get.isRegistered<FocusNavController>()
-                            ? () => Get.find<FocusNavController>().setTab(2)
-                            : null,
+                        onResume: () => Get.to(() => const FocusSessionsScreen()),
                       );
                     },
                   ),
@@ -161,7 +160,7 @@ class FocusHomeScreen extends StatelessWidget {
                                     onOpen: () {
                                       systems.selectSystem(s.id);
                                       if (Get.isRegistered<FocusNavController>()) {
-                                        Get.find<FocusNavController>().setTab(1);
+                                        Get.find<FocusNavController>().goSystems();
                                       }
                                     },
                                   ),

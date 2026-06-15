@@ -86,7 +86,7 @@ class UserRepository extends GetxService {
     'routineFrequency': 'Daily',
     'displayName': 'Hydra user',
     'hydrationGoalMl': 3000,
-    'reminderFrequencyHours': ReminderScheduleHelper.reminderIntervalHours,
+    'reminderFrequencyHours': 0,
     'theme': 'light',
     'activeHomeSystemId': null,
     'hydrationWeeklyAverageMl': 0,
@@ -94,6 +94,7 @@ class UserRepository extends GetxService {
     'hydrationBestDayMl': 0,
     'hydrationBestDayLabel': '—',
     'reminderSlots': defaultReminderSlots(),
+    'timezone': 'UTC',
     'efficiency': defaultEfficiencyRows(),
     'updatedAt': FieldValue.serverTimestamp(),
   };
@@ -544,4 +545,49 @@ class UserRepository extends GetxService {
   }
 
   String nextTaskId(String uid) => tasksRef(uid).doc().id;
+
+  /// Stores the device push token (FCM on Android) keyed by OneSignal subscription id.
+  Future<void> upsertFcmToken({
+    required String uid,
+    required String deviceKey,
+    required String token,
+    required String platform,
+    required bool optedIn,
+  }) async {
+    if (!AppFirebase.isReady) return;
+    await userRef(uid).set({
+      'fcmTokens': {
+        deviceKey: {
+          'token': token,
+          'platform': platform,
+          'optedIn': optedIn,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+      },
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> removeFcmToken({
+    required String uid,
+    required String deviceKey,
+  }) async {
+    if (!AppFirebase.isReady) return;
+    await userRef(uid).update({
+      'fcmTokens.$deviceKey': FieldValue.delete(),
+    });
+  }
+
+  /// IANA timezone id from the device, e.g. `Asia/Karachi` — used by the push backend.
+  Future<void> upsertTimezone({
+    required String uid,
+    required String timezoneId,
+  }) async {
+    if (!AppFirebase.isReady) return;
+    final trimmed = timezoneId.trim();
+    if (trimmed.isEmpty) return;
+    await mergeUser(uid, {
+      'timezone': trimmed,
+      'timezoneUpdatedAt': FieldValue.serverTimestamp(),
+    });
+  }
 }

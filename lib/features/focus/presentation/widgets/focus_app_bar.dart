@@ -105,23 +105,31 @@ class _FocusProfileAvatar extends StatelessWidget {
         Get.find<AuthService>().currentUser != null;
 
     if (!canUseAuth) {
-      return InkWell(
-        onTap: () {
-          if (AppFirebase.isReady && Get.isRegistered<AuthService>()) {
-            Get.to(() => const AuthScreen());
-            return;
-          }
-          Get.snackbar('Hydra', 'Sign in to sync your profile');
-        },
-        borderRadius: BorderRadius.circular(20),
-        child: avatar,
+      return Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          onTap: () {
+            if (AppFirebase.isReady && Get.isRegistered<AuthService>()) {
+              Get.to(() => const AuthScreen());
+              return;
+            }
+            Get.snackbar('Hydra', 'Sign in to sync your profile');
+          },
+          customBorder: const CircleBorder(),
+          child: avatar,
+        ),
       );
     }
 
-    return InkWell(
-      onTap: () => showHydraAccountSheet(context),
-      borderRadius: BorderRadius.circular(20),
-      child: avatar,
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: () => showHydraAccountSheet(context),
+        customBorder: const CircleBorder(),
+        child: avatar,
+      ),
     );
   }
 }

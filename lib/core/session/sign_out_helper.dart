@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:water_drink_app/core/firebase/app_firebase.dart';
 import 'package:water_drink_app/core/push/onesignal_service.dart';
+import 'package:water_drink_app/core/push/push_token_firestore_sync.dart';
 import 'package:water_drink_app/core/session/session_reset.dart';
 import 'package:water_drink_app/data/services/auth_service.dart';
 
@@ -51,6 +52,10 @@ abstract final class SignOutHelper {
         navigator.pop();
       }
     }
+
+    try {
+      await PushTokenFirestoreSync.instance.clearCurrentDevice();
+    } catch (_) {}
 
     try {
       if (AppFirebase.isReady && Get.isRegistered<AuthService>()) {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +13,8 @@ import 'package:water_drink_app/core/firebase/app_firebase.dart';
 import 'package:water_drink_app/core/network/connectivity_controller.dart';
 import 'package:water_drink_app/core/notifications/notification_coordinator.dart';
 import 'package:water_drink_app/core/push/onesignal_service.dart';
+import 'package:water_drink_app/core/push/push_token_firestore_sync.dart';
+import 'package:water_drink_app/core/session/user_timezone_firestore_sync.dart';
 import 'package:water_drink_app/core/reminders/reminder_notification_service.dart';
 import 'package:water_drink_app/core/session/local_profile_store.dart';
 import 'package:water_drink_app/data/repositories/user_repository.dart';
@@ -44,6 +48,16 @@ Future<void> main() async {
     Get.put(UserRepository(), permanent: true);
     await OneSignalService.instance.initialize();
     OneSignalService.instance.bindAuth(Get.find<AuthService>());
+    PushTokenFirestoreSync.instance.bind(
+      auth: Get.find<AuthService>(),
+      repository: Get.find<UserRepository>(),
+    );
+    UserTimezoneFirestoreSync.instance.bind(
+      auth: Get.find<AuthService>(),
+      repository: Get.find<UserRepository>(),
+    );
+    unawaited(PushTokenFirestoreSync.instance.ensureSynced());
+    unawaited(UserTimezoneFirestoreSync.instance.ensureSynced());
   } else if (OneSignalService.isSupported) {
     await OneSignalService.instance.initialize();
   }
@@ -59,7 +73,9 @@ Future<void> main() async {
   await ReminderNotificationService.instance.initialize();
   await NotificationCoordinator.instance.refreshStatus();
   if (Get.find<LocalProfileStore>().reminderSlots.any((s) => s.enabled)) {
-    await NotificationCoordinator.instance.topUpScheduleFromLocal();
+    await NotificationCoordinator.instance.applySchedule(
+      Get.find<LocalProfileStore>().reminderSlots.toList(),
+    );
   }
   FlutterNativeSplash.remove();
   runApp(const WaterDrinkApp());

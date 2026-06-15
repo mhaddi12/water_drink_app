@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:water_drink_app/app/widgets/hub_ui.dart';
-import 'package:water_drink_app/app/widgets/hydra_app_drawer.dart';
 import 'package:water_drink_app/core/notifications/notification_coordinator.dart';
 import 'package:water_drink_app/core/reminders/reminder_schedule_helper.dart';
 import 'package:water_drink_app/features/reminders/controllers/reminders_controller.dart';
@@ -12,11 +11,9 @@ class RemindersScreen extends GetView<RemindersController> {
 
   @override
   Widget build(BuildContext context) {
-    final interval = ReminderScheduleHelper.intervalLabel;
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      drawer: const HydraAppDrawer(),
+      appBar: AppBar(title: const Text('Reminders')),
       body: SafeArea(
         child: Obx(() {
           controller.slots;
@@ -35,9 +32,15 @@ class RemindersScreen extends GetView<RemindersController> {
           return CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
-                child: HubPageHeader(
-                  title: 'Hydration reminders',
-                  subtitle: 'Notifications every $interval',
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                  child: Text(
+                    'Push alerts from your server · timing is not set in the app',
+                    style: TextStyle(
+                      color: HubUi.mutedText(context),
+                      height: 1.4,
+                    ),
+                  ),
                 ),
               ),
               SliverPadding(
@@ -69,7 +72,7 @@ class RemindersScreen extends GetView<RemindersController> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Enable alerts to get a reminder every $interval.',
+                              'Allow notifications so your backend can send hydration reminders to this device.',
                               style: TextStyle(
                                 color: HubUi.mutedText(context),
                                 height: 1.4,
@@ -101,14 +104,14 @@ class RemindersScreen extends GetView<RemindersController> {
                             Row(
                               children: [
                                 const Icon(
-                                  Icons.alarm_on_rounded,
+                                  Icons.cloud_done_rounded,
                                   color: Colors.white,
                                   size: 28,
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    enabled ? 'Reminders on' : 'Reminders off',
+                                    enabled ? 'Push reminders on' : 'Push reminders off',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w800,
@@ -143,17 +146,15 @@ class RemindersScreen extends GetView<RemindersController> {
                       child: SwitchListTile(
                         contentPadding: EdgeInsets.zero,
                         title: Text(
-                          interval,
+                          ReminderScheduleHelper.statusLabel,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         subtitle: Text(
                           enabled
-                              ? (ReminderScheduleHelper.useFastReminders
-                                  ? 'Debug build · fires every 3 minutes'
-                                  : '${ReminderScheduleHelper.slotsPerDay} reminders per day')
-                              : 'Turn on to remind you throughout the day',
+                              ? 'This device is registered for push · timing is controlled by your backend'
+                              : 'Turn on to save your FCM token and allow server-side reminders',
                           style: TextStyle(color: HubUi.mutedText(context)),
                         ),
                         value: enabled && permission,

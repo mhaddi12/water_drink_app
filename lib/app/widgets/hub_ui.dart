@@ -32,17 +32,22 @@ class HubPageHeader extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.trailing,
+    this.showMenu = true,
   });
 
   final String title;
   final String? subtitle;
   final Widget? trailing;
 
+  /// When false, hides the drawer menu (e.g. Settings tab in bottom nav).
+  final bool showMenu;
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final canPop = Navigator.of(context).canPop();
-    final hasDrawer = Scaffold.maybeOf(context)?.hasDrawer == true;
+    final hasDrawer =
+        showMenu && Scaffold.maybeOf(context)?.hasDrawer == true;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
@@ -59,7 +64,7 @@ class HubPageHeader extends StatelessWidget {
             IconButton(
               onPressed: () => openHydraDrawer(context),
               icon: const Icon(Icons.menu_rounded),
-              tooltip: 'Menu',
+              tooltip: 'More',
             )
           else if (canPop)
             IconButton(

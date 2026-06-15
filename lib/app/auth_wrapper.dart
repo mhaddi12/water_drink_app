@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:water_drink_app/core/firebase/app_firebase.dart';
+import 'package:water_drink_app/core/push/push_token_firestore_sync.dart';
+import 'package:water_drink_app/core/session/user_timezone_firestore_sync.dart';
 import 'package:water_drink_app/data/services/auth_service.dart';
 import 'package:water_drink_app/features/auth/presentation/screens/auth_screen.dart';
 import 'package:water_drink_app/features/focus/presentation/screens/focus_root_screen.dart';
@@ -51,7 +53,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
         }
         final user = snapshot.data ?? auth.currentUser;
         if (user != null) {
-          return const FocusRootScreen();
+          return const _AuthenticatedHome();
         }
         return const AuthScreen();
       },
@@ -83,6 +85,28 @@ class _OfflineShell extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Runs push-token sync once when the user is already signed in (app reopen).
+class _AuthenticatedHome extends StatefulWidget {
+  const _AuthenticatedHome();
+
+  @override
+  State<_AuthenticatedHome> createState() => _AuthenticatedHomeState();
+}
+
+class _AuthenticatedHomeState extends State<_AuthenticatedHome> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(PushTokenFirestoreSync.instance.ensureSynced());
+      unawaited(UserTimezoneFirestoreSync.instance.ensureSynced());
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const FocusRootScreen();
 }
 
 class _AuthBootstrapScaffold extends StatelessWidget {

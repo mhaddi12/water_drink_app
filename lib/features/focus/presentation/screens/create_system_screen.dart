@@ -81,7 +81,7 @@ class _CreateSystemScreenState extends State<CreateSystemScreen> {
       Get.find<HomeController>().userSystems.insert(0, system);
       Get.find<SystemsController>().selectSystem(system.id);
       if (Get.isRegistered<FocusNavController>()) {
-        Get.find<FocusNavController>().setTab(1);
+        Get.find<FocusNavController>().goSystems();
       }
       if (mounted) Get.back();
       Get.snackbar('Hydra', 'System saved on this device. Add tasks in Systems.');
@@ -101,7 +101,7 @@ class _CreateSystemScreenState extends State<CreateSystemScreen> {
       if (systemId.isNotEmpty) {
         Get.find<SystemsController>().selectSystem(systemId);
         if (Get.isRegistered<FocusNavController>()) {
-          Get.find<FocusNavController>().setTab(1);
+          Get.find<FocusNavController>().goSystems();
         }
       }
       if (mounted) Get.back();

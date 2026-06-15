@@ -14,8 +14,7 @@ class LocalProfileStore extends GetxService {
 
   final displayName = 'Hydra user'.obs;
   final hydrationGoalMl = 3000.obs;
-  final reminderFrequencyHours =
-      ReminderScheduleHelper.reminderIntervalHours.obs;
+  final reminderFrequencyHours = 0.obs;
   final theme = 'light'.obs;
   final activeHomeSystemId = RxnString();
 
@@ -44,8 +43,7 @@ class LocalProfileStore extends GetxService {
     reminderSlots.clear();
     displayName.value = 'Hydra user';
     hydrationGoalMl.value = 3000;
-    reminderFrequencyHours.value =
-        ReminderScheduleHelper.reminderIntervalHours;
+    reminderFrequencyHours.value = 0;
     theme.value = 'light';
     activeHomeSystemId.value = null;
     seedDefaults();

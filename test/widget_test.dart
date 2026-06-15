@@ -34,6 +34,7 @@ void main() {
 
     expect(find.text('Build your system'), findsOneWidget);
     expect(find.byTooltip('Menu'), findsWidgets);
-    expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.text('Settings'), findsOneWidget);
   });
 }
